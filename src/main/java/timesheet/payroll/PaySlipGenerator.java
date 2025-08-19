@@ -68,7 +68,7 @@ public class PaySlipGenerator {
 
 		// Logo (if needed)
 		try {
-			ClassPathResource imageResource = new ClassPathResource("static/img/logo.png");
+			ClassPathResource imageResource = new ClassPathResource("static/img/");
 			InputStream logoStream = imageResource.getInputStream();
 			byte[] logoBytes = logoStream.readAllBytes();
 			Image logo = Image.getInstance(logoBytes);
