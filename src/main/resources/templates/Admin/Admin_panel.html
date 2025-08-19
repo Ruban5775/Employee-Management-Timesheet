@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeX - Admin</title>
+    
+ 
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/Admin/admin_style.css">
+	<link rel="stylesheet" href="/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/css/bootstrap-icons.css">
+
+
+	 
+	<link rel="icon" type="image/x-icon" href="img/fav.png">
+	
+
+
+</head>
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <nav class="bg-dark text-white p-3 sidebar collapse show" id="sidebar">
+            <button class="btn btn-outline-light d-md-none mb-3" onclick="toggleSidebar()">☰ Menu</button>
+			<h2 class="mb-4 text-center text-white position-relative tidy-heading">
+				TimeX
+
+			</h2>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link text-white" href="#" onclick="showContent('dashboard'); return false;"><i class="bi bi-house me-2"></i> Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="#" onclick="showContent('manage-user')"><i class="bi bi-people me-2"></i> Manage Employee's</a></li>
+               <!--  <li class="nav-item"><a class="nav-link text-white" href="#" onclick="showContent('delegates')"><i class="bi bi-person-check me-2"></i> Delegates</a></li> -->
+                <li class="nav-item"><a class="nav-link text-white" href="#" onclick="showContent('charge-code')"><i class="bi bi-credit-card me-2"></i> Code Manage</a></li>
+				<li class="nav-item"><a class="nav-link text-white" href="#" onclick="showContent('expense-code')"><i class="bi bi-credit-card-2-front-fill"></i> Expense Code</a></li>
+				<li class="nav-item"><a class="nav-link text-white" href="#" onclick="showContent('holiday')"><img  src="img/leave2.png"> &nbsp Holiday's Manage</a></li>
+				<hr>
+				<li class="nav-item"><a class="nav-link text-white" href="#" onclick="showContent('approval')"><i class="bi bi-app-indicator"></i>Time Approvals</a></li>
+				<li class="nav-item dropdown">
+				    <a class="nav-link text-white dropdown-toggle" href="#" id="payrollDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+				        <i class="bi bi-paypal"></i> Payroll
+				    </a>
+				    <ul class="dropdown-menu bg-dark border-0 shadow" style="margin-left: 10px;" data-bs-auto-close="outside">
+				       <!--  <li>
+				            <a class="nav-link text-white" href="#" onclick="event.stopPropagation(); event.preventDefault(); showContent('payroll-summary')">Payroll Summary</a>
+				        </li> -->
+				        <li>
+				            <a class="nav-link text-white" href="#" onclick="event.stopPropagation(); event.preventDefault(); showContent('salary-process')">Salary Process</a>
+				        </li>
+				        <li>
+				            <a class="nav-link text-white" href="#" onclick="event.stopPropagation(); event.preventDefault(); showContent('payslip')">Payslip</a>
+				        </li>
+				    </ul>
+				</li>
+			</ul>
+        </nav>
+        
+        <!-- Main Content -->
+        <div class="flex-grow-1 p-3 main-content">
+            <!-- Top Bar -->
+            <div class="top-bar d-flex justify-content-between align-items-center">
+                <button class="btn btn-outline-dark d-md-none" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+                <img src="img/logo.png" alt="Logo" height="40">
+				
+				<div class="iconsmenu">
+					<i class="bi bi-bell" id="notificationBell" onclick="toggleNotifications()"></i>
+					<span id="notificationCount" class="badge badge-danger">0</span>
+						
+							<div id="notificationDropdown" class="dropdown-menu notification-dropdown">
+									<h6 class="dropdown-header">Notifications</h6>
+									<div id="notificationList"></div>
+							</div>					
+					
+					 
+
+
+				    <i class="bi bi-person-circle" id="userIcon" onclick="toggleDropdown()"></i>
+					<span id="userName" style="color: black; margin-left: 10px; display: none;"></span>
+					
+
+				    <div id="userDropdown" class="dropdown-menu">
+				        <a href="#" class="dropdown-item">Change Password</a>
+				        <a href="#" class="dropdown-item">Switch Employee</a>
+						<a href="#" class="dropdown-item">Switch Super Admin</a>
+						<a href="#" class="dropdown-item" id="logout">Logout</a>
+				    </div>
+				</div>
+            </div> <br>
+             
+            <!-- Dynamic Content -->
+            <h2 id="content-title" class="mb-3">Dashboard</h2>
+            <div id="content-box" class="p-4 border rounded shadow bg-white"></div>
+			<div id="summery"></div>
+			
+        </div>
+    </div>
+	
+	<!-- Bootstrap Modal for Assign Employee -->
+	<div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+	    <div class="modal-dialog modal-dialog-centered">
+	        <div class="modal-content" style="height: 70vh">
+	            <div class="modal-header">
+	                <h5 class="modal-title" id="assignModalLabel">Assign Employees</h5>
+	                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	            </div>
+	            <div class="modal-body" style="max-height: 150vh; overflow-y: auto;">
+	                <h6><strong>Charge Code:</strong> <span id="chargeCodeDisplay"></span></h6>
+					<h6><strong>Description:</strong> <span id="chargeCodeDescription"></span></h6>
+
+	                <!-- Employee Selection Dropdown with Search -->
+					  <label for="employeeSearch" class="form-label mt-3">Select Employee:</label>
+					                <div class="dropdown">
+					                    <button class="btn btn-outline-primary w-100 dropdown-toggle" type="button" id="employeeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+					                        -- Select Employee --
+					                    </button>
+					                    <ul class="dropdown-menu w-100" aria-labelledby="employeeDropdown" style="max-height: 250px; overflow-y: auto;">
+					                        <!-- Search Box -->
+					                        <li class="p-2" style="position: sticky; top: 0;">
+					                            <input type="text" id="employeeSearch" class="form-control" placeholder="Search employee..." onkeyup="filterEmployees()">
+					                        </li>
+					                        <!-- Employee List (Fetched Dynamically) -->
+					                        <div id="employeeList"></div>
+					                    </ul>
+					                </div>
+
+					                <!-- Selected Employees -->
+					                <div class="mt-3">
+					                    <label class="form-label">Selected Employees:</label>
+					                    <div id="selectedEmployeesContainer" class="border rounded p-2"></div>
+					                </div>
+					            </div>
+					            <div class="modal-footer">
+					                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					                <button type="button" class="btn btn-primary" onclick="assignEmployees()">Assign</button>
+					            </div>
+					        </div>
+					    </div>
+					</div>
+
+					<!-- Change Password Modal -->
+					<div class="modal" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+					    <div class="modal-dialog">
+					        <div class="modal-content">
+					            <div class="modal-header">
+					                <h5 class="modal-title" id="changePasswordModalLabel">Change Your Password</h5>
+					                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					            </div>
+					            <div class="modal-body">
+					                <form>
+					                    <div class="mb-3">
+					                        <label for="newPassword" class="form-label">New Password</label>
+					                        <input type="text" class="form-control" id="newPassword" placeholder="Enter your new password" required>
+					                        <div id="passwordError" style="color: red; display: none;"></div>
+					                    </div>
+					                    <div class="mb-3">
+					                        <label for="confirmPassword" class="form-label">Confirm New Password</label>
+					                        <input type="text" class="form-control" id="confirmPassword" placeholder="Confirm your new password" required>
+					                    </div>
+					                </form>
+					            </div>
+					            <div class="modal-footer">
+					                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+					                <button type="button" class="btn btn-primary" id="sendOtpBtn">Send OTP</button>
+					            </div>
+					        </div>
+					    </div>
+					</div>
+
+					
+
+					<!-- OTP Modal -->
+					<div class="modal" id="otpModal" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+					    <div class="modal-dialog">
+					        <div class="modal-content">
+					            <div class="modal-header">
+					                <h5 class="modal-title" id="otpModalLabel">Enter OTP</h5>
+					                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					            </div>
+					            <div class="modal-body">
+					                <form>
+					                    <div class="mb-3">
+					                        <label for="otp" class="form-label">One-Time Password (OTP)</label>
+					                        <input type="text" class="form-control" id="otp" placeholder="Enter the OTP sent to your email" required>
+					                        <div id="otpError" style="color: red; display: none;"></div>
+					                    </div>
+					                </form>
+					                <!-- Timer Display -->
+					                <div id="timerDisplay" style="margin-top: 10px;"></div>
+					            </div>
+					            <div class="modal-footer">
+					                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+					                <button type="button" class="btn btn-primary" id="changePasswordBtn">Change Password</button>
+					                <button type="button" class="btn btn-warning" id="resendOtpBtn" style="display: none;">Resend OTP</button>
+					            </div>
+					        </div>
+					    </div>
+					</div>
+
+					
+					<!-- Confirmation Modal for Employee -->
+					<div class="modal" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+					    <div class="modal-dialog">
+					        <div class="modal-content">
+					            <div class="modal-header">
+					                <h5 class="modal-title" id="confirmationModalLabel">Confirm Action</h5>
+					                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					            </div>
+					            <div class="modal-body">
+					                <p id="confirmationMessage">Do you want to proceed?</p>
+					            </div>
+					            <div class="modal-footer">
+					                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					                <button type="button" class="btn btn-primary" id="confirmActionBtn">Yes</button>
+					            </div>
+					        </div>
+					    </div>   
+					</div>
+
+					<!-- Confirmation Modal  for assigning Charge code-->
+					<div class="modal fade" id="confirmationModal2" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+					  <div class="modal-dialog">
+					    <div class="modal-content">
+					      <div class="modal-header">
+					        <h5 class="modal-title" id="confirmationModalLabel">Confirm Assignment</h5>
+					        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					      </div>
+					      <div class="modal-body">
+					        Are you sure you want to assign this charge code to the selected employees?
+					        <br><br>
+					        <strong>Charge Code:</strong> <span id="confirmationChargeCode"></span>
+					        <br>
+					        <strong>Description:</strong> <span id="confirmationDescription"></span>
+					      </div>
+					      <div class="modal-footer">
+					        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					        <button type="button" class="btn btn-primary" id="confirmAssignment">Yes, Assign</button>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+
+					
+					<!-- Issue Message Modal -->
+					<div class="modal fade" id="issueMessageModal" tabindex="-1" aria-labelledby="issueMessageLabel" aria-hidden="true">
+					    <div class="modal-dialog">
+					        <div class="modal-content">
+					            <div class="modal-header">
+					                <h5 class="modal-title" id="issueMessageLabel">Raise an Issue</h5>
+					                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					            </div>
+					            <div class="modal-body">
+					                <textarea id="issueMessageInput" class="form-control" placeholder="Enter issue details..." rows="4"></textarea>
+					                <div id="issueError" style="color: red; display: none; margin-top: 10px;">Issue message is required!</div>
+					            </div>
+					            <div class="modal-footer">
+					                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					                <button type="button" class="btn btn-danger" id="confirmIssueBtn">Raise Issue</button>
+					            </div>
+					        </div>
+					    </div>
+					</div>
+
+					
+					<!-- Approval Confirmation Modal -->
+					<div class="modal fade" id="approvalConfirmModal" tabindex="-1" aria-labelledby="approvalConfirmLabel" aria-hidden="true">
+					    <div class="modal-dialog">
+					        <div class="modal-content">
+					            <div class="modal-header">
+					                <h5 class="modal-title" id="approvalConfirmLabel">Confirm Approval</h5>
+					                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					            </div>
+					            <div class="modal-body">
+					                <p id="approvalMessage"></p> <!-- Dynamic message -->
+					            </div>
+					            <div class="modal-footer">
+					                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					                <button type="button" class="btn btn-success" id="confirmApprovalBtn">Yes, Approve</button>
+					            </div>
+					        </div>
+					    </div>
+					</div>
+
+					<!-- Complete Confirmation Modal -->
+					<div class="modal fade" id="completeModal" tabindex="-1" aria-labelledby="completeModalLabel" aria-hidden="true">
+					  <div class="modal-dialog">
+					    <div class="modal-content">
+					      <div class="modal-header">
+					        <h5 class="modal-title" id="completeModalLabel">Confirm Completion</h5>
+					        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					      </div>
+					      <div class="modal-body">
+					        Are you completely finishing this project?<br><br>
+					        <strong>Note:</strong> Once clicked "Complete", you can't assign employees to this charge code!
+					      </div>
+					      <div class="modal-footer">
+					        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					        <button type="button" class="btn btn-success" id="confirmCompleteBtn">Complete</button>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+
+					<!-- Delete Confirmation Modal -->
+					<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+					  <div class="modal-dialog">
+					    <div class="modal-content">
+					      <div class="modal-header">
+					        <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+					        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					      </div>
+					      <div class="modal-body">
+					        Are you sure you want to delete this charge code?<br><br>
+					        <strong>Warning:</strong> This action cannot be Undo!
+					      </div>
+					      <div class="modal-footer">
+					        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+					
+									<!-- Expense Delete Confirmation Modal -->
+										<div class="modal fade" id="ExpdeleteModal" tabindex="-1" aria-labelledby="ExpdeleteModalLabel" aria-hidden="true">
+										  <div class="modal-dialog">
+										    <div class="modal-content">
+										      <div class="modal-header">
+										        <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+										        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+										      </div>
+										      <div class="modal-body">
+										        Are you sure you want to delete this Expense code?<br><br>
+										        <strong>Warning:</strong> This action cannot be undone!
+										      </div>
+										      <div class="modal-footer">
+										        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+										        <button type="button" class="btn btn-danger" id="confirmExpDeleteBtn">Delete</button>
+										      </div>
+										    </div>
+										  </div>
+										</div>
+										
+										<!-- Expense Delete Confirmation Modal -->
+						<div class="modal fade" id="holidaymodal" tabindex="-1" aria-labelledby="holidaymodalLabel" aria-hidden="true">
+							<div class="modal-dialog">
+							<div class="modal-content">
+							<div class="modal-header">
+							<h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+								<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+								</div>
+								<div class="modal-body">
+								 Are you sure you want to delete this Holiday<br><br>
+								<strong>Warning:</strong> This action cannot be undone!
+								</div>
+							<div class="modal-footer">
+									<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+									<button type="button" class="btn btn-danger" id="confirmHolidayDeleteBtn">Delete</button>
+								 </div>
+								</div>
+							</div>
+							</div>
+
+					
+					<!-- Alerts -->
+					<div id="customAlert" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+					    <div id="alertToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+					        <div class="d-flex">
+					            <div class="toast-body" id="alertMessage">
+					                <!-- Alert Message Will Appear Here -->
+					            </div>
+					            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+					        </div>
+					    </div>
+					</div>
+					
+					<div id="loader" class="loader-container">
+					    <div class="spinner-border text-primary" role="status">
+					        <span class="visually-hidden">Loading...</span>
+					    </div>
+					</div>
+					
+
+					<!-- Confirmation Modal -->
+					<div class="modal fade" id="payslipapproveConfirmModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+					  <div class="modal-dialog">
+					    <div class="modal-content shadow">
+					      <div class="modal-header">
+					        <h5 class="modal-title" id="approveModalLabel">Confirm Approval</h5>
+					        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					      </div>
+					      <div class="modal-body" id="confirmMessage">
+					        <!-- Message injected by JS -->
+					      </div>
+					      <div class="modal-footer">
+					        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					        <button type="button" class="btn btn-success" id="confirmApproveBtn">Yes, Approve</button>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+
+
+					<!-- Salary Hike Confirmation Modal -->
+					<div class="modal fade" id="salaryHikeConfirmModal" tabindex="-1" aria-labelledby="salaryHikeConfirmLabel" aria-hidden="true">
+					  <div class="modal-dialog">
+					    <div class="modal-content shadow">
+					      <div class="modal-header">
+					        <h5 class="modal-title" id="salaryHikeConfirmLabel">Confirm Salary Hike</h5>
+					        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					      </div>
+					      <div class="modal-body" id="salaryHikeConfirmMessage">
+					        <!-- Message will be injected dynamically -->
+					      </div>
+					      <div class="modal-footer">
+					        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					        <button type="button" class="btn btn-success" id="confirmSalaryHikeBtn">Yes, Confirm</button>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+
+					
+					<!-- Salary History Modal -->
+					<div class="modal fade" id="salaryHistoryModal" tabindex="-1" aria-labelledby="salaryHistoryModalLabel" aria-hidden="true">
+					  <div class="modal-dialog modal-lg">
+					    <div class="modal-content shadow">
+					      <div class="modal-header">
+					        <h5 class="modal-title" id="salaryHistoryModalLabel">Salary History for <span id="historyEmpName"></span></h5>
+					        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					      </div>
+					      <div class="modal-body">
+					        <table class="table table-bordered table-hover">
+					          <thead>
+					            <tr>
+					              <th>Effective From</th>
+					              <th>Old Salary</th>
+					              <th>New Salary</th>
+					              <th>Hike %</th>
+					              <th>Reason</th>
+					            </tr>
+					          </thead>
+					          <tbody id="salaryHistoryTableBody">
+					            <!-- Rows inserted via JS -->
+					          </tbody>
+					        </table>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+					
+					
+					<!-- Logout Confirmation Modal -->
+					<div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmModalLabel" aria-hidden="true">
+					  <div class="modal-dialog">
+					    <div class="modal-content">
+					      <div class="modal-header">
+					        <h5 class="modal-title" id="logoutConfirmModalLabel">Confirm Logout</h5>
+					        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					      </div>
+					      <div class="modal-body">
+					        <p id="logoutMessage">Are you sure you want to logout?</p>
+					      </div>
+					      <div class="modal-footer">
+					        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					        <button class="btn btn-danger" id="confirmLogoutBtn">Logout</button>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+
+					<!-- View bank details -->
+					<div class="modal fade" id="bankDetailsModal" tabindex="-1" aria-hidden="true">
+					  <div class="modal-dialog  modal-lg">
+					    <div class="modal-content">
+					      <div class="modal-header">
+							<h5 class="modal-title" id="bankDetailsModalTitle">Bank Details</h5>
+					        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+					      </div>
+					      <div class="modal-body">
+					        <div class="row g-3">
+
+					          <div class="col-md-6">
+					            <label class="form-label text-muted mb-0">Account Holder Name</label>
+					            <div class="fw-bold">
+					              <span id="modalAccountHolder">-</span>
+					              <i class="bi bi-clipboard ms-2 text-primary" style="cursor: pointer;"></i>
+					            </div>
+					          </div>
+
+					          <div class="col-md-6">
+					            <label class="form-label text-muted mb-0">Account Number</label>
+					            <div class="fw-bold">
+					              <span id="modalAccountNumber">-</span>
+					              <i class="bi bi-clipboard ms-2 text-primary" style="cursor: pointer;"></i>
+					            </div>
+					          </div>
+
+					          <div class="col-md-6">
+					            <label class="form-label text-muted mb-0">IFSC Code</label>
+					            <div class="fw-bold">
+					              <span id="modalIFSC">-</span>
+					              <i class="bi bi-clipboard ms-2 text-primary" style="cursor: pointer;"></i>
+					            </div>
+					          </div>
+
+					          <div class="col-md-6">
+					            <label class="form-label text-muted mb-0">Bank Name</label>
+					            <div class="fw-bold">
+					              <span id="modalBankName">-</span>
+					              <i class="bi bi-clipboard ms-2 text-primary" style="cursor: pointer;"></i>
+					            </div>
+					          </div>
+
+					          <div class="col-md-12 mt-3">
+					            <label class="form-label text-muted mb-0">Bank Book</label>
+					            <img id="modalBankPhoto" src="#" class="img-fluid rounded border" style="max-width: 300px; display: none;" alt="Bank Book Photo" />
+					          </div>
+
+					        </div>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+					
+					
+					
+					<!-- Modal to show full timesheet -->
+					<div class="modal fade" id="adminTimesheetModal" tabindex="-1" aria-hidden="true">
+					  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+					    <div class="modal-content">
+					      <div class="modal-header">
+							<h5 class="modal-title">
+							   Timesheet Preview - <span id="modalUsername" class="text-primary"></span> | <span id="modalPeriod" class="text-secondary"></span>
+							 </h5>
+					        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+					      </div>
+					      <div class="modal-body">
+					        <table class="table table-bordered text-center">
+					          <thead class="table-light">
+					            <tr id="adminTimesheetHeader">
+					              <!-- JavaScript will inject the date columns dynamically -->
+					            </tr>
+					          </thead>
+					          <tbody id="adminTimesheetBody">
+					            <!-- JavaScript will inject rows dynamically -->
+					          </tbody>
+					        </table>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+
+
+    
+    <!-- Bootstrap JS -->
+
+	<script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/Admin/admin_script.js"></script>
+	<script src="/Payroll/SalaryLogic.js"></script>
+	
+	<script src="/js/sockjs.min.js"></script>
+	<script src="/js/stomp.min.js"></script>
+	
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+	<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
+
+
+
+
+
+
+    <script>
+		
+		document.addEventListener("DOMContentLoaded", function () {
+		    const navLinks = document.querySelectorAll(".nav-link");
+
+		    navLinks.forEach(link => {
+		        link.addEventListener("click", function () {
+		            // Remove active class from all links
+		            navLinks.forEach(nav => nav.classList.remove("active"));
+		            
+		            // Add active class to clicked link
+		            this.classList.add("active");
+		        });
+		    });
+		});
+
+				
+		document.addEventListener("DOMContentLoaded", function() {
+		          const userName = sessionStorage.getItem('userName');
+
+		          if (userName) {
+		              const userNameElement = document.getElementById('userName');
+		              userNameElement.innerText = userName;
+		              userNameElement.style.display = 'inline'; // Show the name under the icon
+		          }
+		      });
+		
+        // Function to toggle the dropdown menu visibility
+        function toggleDropdown() { 
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+        }
+
+
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const userIcon = document.getElementById('userIcon');
+            if (!userIcon.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+		
+		
+		/*change password with otp*/
+		
+		let otp; // This will store the OTP sent to the email
+		let otpTimer; // To store the timer for OTP expiration
+		let countdown = 120; // 2 minutes countdown in seconds
+
+		// Function to update the timer display
+		function updateTimerDisplay() {
+		    const timerDisplay = document.getElementById('timerDisplay');
+		    if (timerDisplay) {
+		        const minutes = Math.floor(countdown / 60);
+		        const seconds = countdown % 60;
+		        timerDisplay.innerText = `Time remaining: ${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+		    }
+		}
+
+		// Event listener for opening the change password modal
+		document.getElementById('userDropdown').addEventListener('click', function (e) {
+		    if (e.target.innerText === 'Change Password') {
+		        // Open the modal when 'Change Password' is clicked
+		        var changePasswordModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+		        changePasswordModal.show();
+		    }
+		});
+
+		// Send OTP when the "Send OTP" button is clicked
+		document.getElementById('sendOtpBtn').addEventListener('click', function () {
+			showLoader();
+		    const newPassword = document.getElementById('newPassword').value;
+		    const confirmPassword = document.getElementById('confirmPassword').value;
+		    const passwordError = document.getElementById('passwordError');
+		    
+		    // Hide previous error message
+		    passwordError.style.display = 'none';
+
+		    // Validate password fields
+		    if (!newPassword || !confirmPassword) {
+		        passwordError.style.display = 'block';
+		        passwordError.innerHTML = "Both fields are required.";
+		        return;
+		    }
+
+		    if (newPassword !== confirmPassword) {
+		        passwordError.style.display = 'block';
+		        passwordError.innerHTML = "Passwords do not match.";
+		        return;
+		    }
+
+			showLoader(); 
+		    // Send the request to the backend to send OTP to the user's email
+		    const email = sessionStorage.getItem('userName');  // Get the email of the logged-in user
+
+		    fetch("/send-otp", {
+		        method: "POST",
+		        headers: {
+		            "Content-Type": "application/json"
+		        },
+		        body: JSON.stringify({ email: email })
+		    })
+		    .then(response => response.json())
+		    .then(result => {
+		        if (result.success) {
+		            otp = result.otp;  // Store the OTP
+		            var otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
+		            otpModal.show();
+
+		            // Start the countdown timer
+		            countdown = 120; // Reset countdown to 2 minutes
+		            updateTimerDisplay();
+		            otpTimer = setInterval(function() {
+		                countdown--;
+		                updateTimerDisplay();
+		                if (countdown <= 0) {
+		                    clearInterval(otpTimer);
+		                    document.getElementById('sendOtpBtn').style.display = 'none'; // Hide Send OTP button
+		                    document.getElementById('resendOtpBtn').style.display = 'inline-block'; // Show Resend OTP button
+		                }
+		            }, 1000);
+
+		        } else {
+		            showAlert("Failed to send OTP. Please try again.", "danger");
+		        }
+		    })
+		    .catch(error => {
+		        console.error("Error:", error);
+		        showAlert("An error occurred. Please try again later.", "danger");
+		    })
+			.finally(() => hideLoader());
+		});
+
+		// Resend OTP functionality
+		document.getElementById('resendOtpBtn').addEventListener('click', function() {
+		    // Trigger the same functionality as the "Send OTP" button
+		    document.getElementById('sendOtpBtn').click();
+		    // Hide the Resend OTP button after clicking
+		    document.getElementById('resendOtpBtn').style.display = 'none';
+		});
+
+		// Change password after OTP validation
+		document.getElementById('changePasswordBtn').addEventListener('click', function () {
+		    const enteredOtp = document.getElementById('otp').value;
+		    const otpError = document.getElementById('otpError');
+
+		    otpError.style.display = 'none';
+
+		    // Validate OTP
+		    if (!enteredOtp) {
+		        otpError.style.display = 'block';
+		        otpError.innerHTML = "OTP is required.";
+		        return;
+		    }
+			
+			showLoader();
+
+		    // Send the OTP and password to the backend for validation
+		    const newPassword = document.getElementById('newPassword').value;
+
+		    fetch("/change-password", {
+		        method: "POST",
+		        headers: {
+		            "Content-Type": "application/json"
+		        },
+		        body: JSON.stringify({
+		            email: sessionStorage.getItem('userName'),
+		            newPassword: newPassword,
+		            otp: enteredOtp
+		        })
+		    })
+		    .then(response => response.json())
+		    .then(result => {
+		        if (result.success) {
+		            showAlert("Your password was changed successfully.", "success");
+
+		            // Close the OTP modal (password change form)
+		            var otpModal = bootstrap.Modal.getInstance(document.getElementById('otpModal'));
+		            otpModal.hide();  // Hide the OTP modal after successful password change
+					
+					// Close the Change Password modal (in case it is still open)
+					          var changePasswordModal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+					          changePasswordModal.hide();  // Hide the Change Password modal as well
+
+		            // Reset the OTP field and form for clean state
+		            document.getElementById('otp').value = '';
+		            document.getElementById('newPassword').value = '';
+		            document.getElementById('confirmPassword').value = '';
+
+		            // Optional: Hide the Resend OTP button again, in case the modal is reopened
+		            document.getElementById('resendOtpBtn').style.display = 'none';
+		            document.getElementById('sendOtpBtn').style.display = 'inline-block';
+		        } else {
+		   
+		            showAlert("Failed to change the password. Please try again.", "danger");
+		        }
+		    })
+		    .catch(error => {
+		        console.error("Error:", error);
+		        showAlert("An error occurred. Please try again later.", "danger");
+		    })
+			.finally(() => hideLoader());
+		});
+
+/*switch employee*/
+
+		document.getElementById('userDropdown').addEventListener('click', function (e) {
+		    // Prevent the default behavior of anchor tag click
+		    event.preventDefault();
+
+		    // Check if the clicked item is 'Switch Employee' 
+		    if (event.target.innerText === 'Switch Employee') {
+		        const userEmail = sessionStorage.getItem('userEmail');  // Fetch the email from sessionStorage
+
+		        if (!userEmail) {
+		            showAlert("User is not logged in. Please log in first.", "danger");
+		            return;
+		        }
+
+		        // Send the email to backend to check if the role is Employee
+		        fetch('/check-employee-role', {
+		            method: 'POST',
+		            headers: {
+		                'Content-Type': 'application/json'
+		            },
+		            body: JSON.stringify({ email: userEmail })
+		        })
+		        .then(response => response.json())
+		        .then(data => {
+		            if (data.success && data.additionalRole === "Employee") {
+		                // Store the employee name in sessionStorage
+		                sessionStorage.setItem('userName', data.eName);
+
+		                // Switch to Employee Dashboard
+		                switchToEmployeePanel();
+		            } else {
+		                showAlert("You are not authorized to switch to the Employee panel.", "danger");
+		            }
+		        })
+		        .catch(error => {
+		            console.error("Error:", error);
+		            showAlert("An error occurred. Please try again.", "danger");
+		        });
+		    }
+		});
+
+		// Function to switch to the Employee panel
+		function switchToEmployeePanel() {
+		    // You can also redirect to employee panel here if required
+		    window.location.href = "/Employee_Dashboard"; // Replace with the correct URL
+		}
+
+
+		       /*Notification*/
+			   document.addEventListener("DOMContentLoaded", function () {
+			   		      let stompClient = null;
+			   		      let notificationCount = 0;
+			   		      let unseenNotifications = [];
+			   		      let removeTimer = null;
+
+			   		      function connectWebSocket() {
+			   		          const socket = new SockJS('/ws');
+			   		          stompClient = Stomp.over(socket);
+							  
+							  stompClient.debug = null;  // Disable debug logs
+
+			   		          stompClient.connect({}, function () {
+
+			   		              // ✅ Admin notifications
+			   		              stompClient.subscribe('/topic/adminNotifications', function (notification) {
+			   		                  const message = JSON.parse(notification.body).message;
+			   		                  showNotification(message, "admin");
+			   		              });
+
+			   		              // ✅ Employee-specific notifications
+			   		              const userName = sessionStorage.getItem("userName");
+			   		              if (userName) {
+			   		                  stompClient.subscribe(`/user/${userName}/topic/notifications`, function (notification) {
+			   		                      const message = JSON.parse(notification.body).message;
+			   		                      showNotification(message, "employee");
+			   		                  });
+			   		              }
+			   		          }, function (error) {
+			   		              console.error("❌ WebSocket error:", error);
+			   		              retryConnection();
+			   		          });
+			   		      }
+ 
+			   		      function retryConnection() {
+
+			   		          setTimeout(connectWebSocket, 3000);
+			   		      }
+
+			   		      function fetchUnreadNotifications() {
+			   		           const userName = sessionStorage.getItem("userRoles");
+			   		          if (!userName) return;
+
+			   		          fetch(`/notifications/unread/${userName}`)
+			   		              .then(response => response.json())
+			   		              .then(data => {
+			   		                  data.forEach(notification => {
+			   		                      showNotification(notification.message, "unread");
+			   		                  });
+			   		              })
+			   		              .catch(error => console.error("❌ Error fetching unread notifications:", error));
+			   		      }
+
+			   		      function showNotification(message, panelType) {
+			   		          const badge = document.getElementById("notificationCount");
+			   		          const notificationList = document.getElementById("notificationList");
+			   		          if (!badge || !notificationList) return;
+
+			   		          notificationCount++;
+			   		          badge.style.display = "inline";
+			   		          badge.textContent = notificationCount;
+
+			   		          const notificationItem = document.createElement("div");
+			   		          notificationItem.className = "dropdown-item";
+			   		          notificationItem.textContent = message;
+			   		          notificationList.prepend(notificationItem);
+			   		          unseenNotifications.push(notificationItem);
+
+			   		          // Start the auto-remove timer
+			   		          startNotificationTimer();
+			   		      }
+
+			   		      function startNotificationTimer() {
+			   		          if (removeTimer) clearTimeout(removeTimer);
+
+			   		          removeTimer = setTimeout(() => {
+			   		              unseenNotifications.forEach((item) => item.remove());
+			   		              unseenNotifications = [];
+			   		              document.getElementById("notificationCount").style.display = "none";
+			   		          }, 2 * 60 * 1000);
+			   		      }
+
+			   		      function toggleNotifications() {
+			   		          const dropdown = document.getElementById("notificationDropdown");
+			   		          if (!dropdown) return;
+
+			   		          dropdown.classList.toggle("show");
+
+			   		          if (dropdown.classList.contains("show")) {
+			   		              unseenNotifications.forEach((item, index) => {
+			   		                  setTimeout(() => {
+			   		                      item.remove();
+			   		                      unseenNotifications.splice(index, 1);
+			   		                      if (unseenNotifications.length === 0) {
+			   		                          document.getElementById("notificationCount").style.display = "none";
+			   		                      }
+			   		                  }, 2 * 60 * 1000);
+			   		              });
+
+			   		              unseenNotifications = [];
+			   		          }
+
+			   		          notificationCount = 0;
+			   		          const badge = document.getElementById("notificationCount");
+			   		          if (badge) {
+			   		              badge.style.display = "none";
+			   		          }
+			   		      }
+
+			   		      document.addEventListener("click", function (event) {
+			   		          const dropdown = document.getElementById("notificationDropdown");
+			   		          const bellIcon = document.getElementById("notificationBell");
+			   		          if (dropdown && bellIcon) {
+			   		              if (!dropdown.contains(event.target) && !bellIcon.contains(event.target)) {
+			   		                  dropdown.classList.remove("show");
+			   		              }
+			   		          }
+			   		      });
+
+			   		      const bellIcon = document.getElementById("notificationBell");
+			   		      if (bellIcon) {
+			   		          bellIcon.addEventListener("click", toggleNotifications);
+			   		      } else {
+			   		          console.error("❌ Notification bell icon not found.");
+			   		      }
+
+			   		      connectWebSocket();
+			   		      fetchUnreadNotifications();
+			   		  });
+
+
+
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <title>TimeX - Login Page</title>
+	<link rel="icon" type="image/x-icon" href="img/d.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(90deg, #5312a6 0%, #b51396 100%);
+            padding: 20px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 25px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: auto;
+            margin: 0 auto 15px;
+        }
+
+        .login-container h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #4A90E2;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 10px;
+            background: #4A90E2;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .login-btn:hover {
+            background: #1A237E;
+        }
+
+        .forgot-password {
+            display: block;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #4A90E2;
+            text-decoration: none;
+        }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 20px;
+            }
+
+            .login-container h2 {
+                font-size: 22px;
+            }
+
+            .input-group input {
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            .login-btn {
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            .forgot-password {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <img src="img/logo.png" alt="Logo" class="logo">
+        <h2>Login</h2>
+
+		<form action="#" method="POST" autocomplete="off">
+		    <div class="input-group">
+		        <label for="email">Email</label>
+		        <input type="email" id="email" name="email" required>
+		    </div>
+		    <div class="input-group">
+		        <label for="password">Password</label>
+		        <input type="password" id="password" name="password" required>
+		    </div>
+		    <button type="submit" class="login-btn">Login</button>
+		    <a href="#" class="forgot-password">Forgot Password?</a>
+
+		    <!-- Error message section -->
+		    <div id="error-message" style="color: red; display: none;"></div>
+		</form>
+    </div>
+
+	<script>
+		// LOGIN LOGIC
+		document.querySelector(".login-btn").addEventListener("click", function(event) {
+		    event.preventDefault(); // Prevent form submission
+
+		    const email = document.getElementById("email").value;
+		    const password = document.getElementById("password").value;
+		    const errorMessage = document.getElementById("error-message");
+
+		    errorMessage.style.display = 'none';
+
+		    // Validate fields
+		    if (!email || !password) {
+		        errorMessage.style.display = 'block';
+		        errorMessage.innerHTML = "Both email and password are required.";
+		        return;
+		    }
+
+		    const data = { email: email, password: password };
+
+		    fetch("/login", {
+		        method: "POST",
+		        headers: { "Content-Type": "application/json" },
+		        body: JSON.stringify(data)
+		    })
+		    .then(response => response.json())
+		    .then(result => {
+		        if (result.success) {
+		            if (result.status === "active") {
+		                // Store user details in sessionStorage
+		                sessionStorage.setItem('userAddRole', result.additionalrole);
+		                sessionStorage.setItem('userName', result.name);
+		                sessionStorage.setItem('userEmail', email);
+		                sessionStorage.setItem('userRoles', result.role);
+						sessionStorage.setItem('userOnboard', result.onboard);
+
+		                // Redirect based on role
+		                if (result.role === "Admin") {
+		                    window.location.href = "/Admin_Dashboard";
+							localStorage.setItem("lastAdminTab", "dashboard");
+		                } else if (result.role === "Employee") {
+		                    window.location.href = "/Employee_Dashboard";
+							localStorage.setItem("activeEmployeeTab", "timeSection");
+		                }
+		            } else {
+						errorMessage.style.display = 'block';
+		                errorMessage.innerHTML ="You are no longer an Employee of Tidy Digital Solutions";
+		            }
+		        } else {
+		            errorMessage.style.display = 'block';
+		            errorMessage.innerHTML = "Invalid email or password. Please try again.";
+					
+		        }
+		    })
+		    .catch(error => {
+		        console.error("Error:", error);
+		        errorMessage.style.display = 'block';
+		        errorMessage.innerHTML = "An error occurred. Please try again later.";
+		    });
+		});
+
+	
+
+
+
+	</script>
+
+</body>
+</html>

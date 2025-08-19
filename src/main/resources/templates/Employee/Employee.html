@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeX - Employee</title>
+	
+	
+
+	<script src="/Employee/script.js"></script>
+	<script src="/js/sockjs.min.js"></script>
+	<script src="/js/stomp.min.js"></script>
+	<script src="/Payroll/SalaryLogic.js"></script>
+
+	
+	<link rel="stylesheet" href="/Employee/style.css">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/bootstrap-icons.css">
+	<script src="/js/bootstrap.bundle.min.js"></script>
+
+
+	<link rel="icon" type="image/x-icon" href="img/fav.png">
+
+</head>
+<body class="time-body">  
+    
+    <!-- Section 1: Header -->
+    <div class="header-section d-flex justify-content-between align-items-center p-3 bg-light border-bottom">
+        <img src="img/logo.png" height="40">		<div class="d-flex align-items-center justify-content-center flex-grow-1">
+		    <h2 class="tidy-heading position-relative m-0 text-center">TimeX</h2>
+		</div>
+		<div class="iconsmenu">
+			<!-- <button>Review Another</button> -->
+			<i class="bi bi-bell" id="notificationBell" onclick="toggleNotifications()"></i>
+				<span id="notificationCount" class="badge badge-danger" style="display: none;">0</span>
+									
+									<div id="notificationDropdown" class="dropdown-menu notification-dropdown">
+									        <h6 class="dropdown-header">Notifications</h6>
+									        <div id="notificationList"></div>
+									    </div>
+
+						    <i class="bi bi-person-circle" id="userIcon" onclick="toggleDropdown()"></i>
+							<span id="userName" style="color: black; margin-left: 10px; display: none;"></span>
+							
+
+						    <div id="userDropdown" class="dropdown-menu">
+						        <a href="#" class="dropdown-item">Change Password</a>
+						        <a href="#" class="dropdown-item">Switch Admin</a>
+								<a href="#" class="dropdown-item" id="logout">Logout</a>
+						    </div>
+						</div>
+						
+					
+    </div>
+
+	<!-- Change Password Modal -->
+	<div class="modal" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <h5 class="modal-title" id="changePasswordModalLabel">Change Your Password</h5>
+	                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	            </div>
+	            <div class="modal-body">
+	                <form>
+	                    <div class="mb-3">
+	                        <label for="newPassword" class="form-label">New Password</label>
+	                        <input type="text" class="form-control" id="newPassword" placeholder="Enter your new password" required>
+	                        <div id="passwordError" style="color: red; display: none;"></div>
+	                    </div>
+	                    <div class="mb-3">
+	                        <label for="confirmPassword" class="form-label">Confirm New Password</label>
+	                        <input type="text" class="form-control" id="confirmPassword" placeholder="Confirm your new password" required>
+	                    </div>
+	                </form>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+	                <button type="button" class="btn btn-primary" id="sendOtpBtn">Send OTP</button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+
+
+	<!-- OTP Modal -->
+	<div class="modal" id="otpModal" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+				<div class="modal-header flex-column align-items-start">
+				    <h5 class="modal-title" id="otpModalLabel">Enter OTP</h5>
+				    <small class="text-muted">An OTP has been sent to your registered email.</small>
+				    <button type="button" class="btn-close position-absolute end-0 top-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+	            <div class="modal-body">
+	                <form>
+	                    <div class="mb-3">
+	                        <label for="otp" class="form-label">One-Time Password (OTP)</label>
+	                        <input type="text" class="form-control" id="otp" placeholder="Enter the OTP" required>
+	                        <div id="otpError" style="color: red; display: none;"></div>
+	                    </div>
+	                </form>
+	                <!-- Timer Display -->
+	                <div id="timerDisplay" class="text-muted mt-2" style="margin-top: 10px;"></div>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+	                <button type="button" class="btn btn-primary" id="changePasswordBtn">Change Password</button>
+	                <button type="button" class="btn btn-warning" id="resendOtpBtn" style="display: none;">Resend OTP</button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+	
+    <!-- Section 2: Navigation -->
+    <div class="navigation-section d-flex p-2 bg-white border-bottom align-items-center">
+        <ul class="nav flex-grow-1">
+            <li class="nav-item"><a class="nav-link active" data-target="timeSection" href="#">Time</a></li>
+            <li class="nav-item"><a class="nav-link" data-target="expenseSection" href="#">Expense</a></li>
+            <li class="nav-item"><a class="nav-link" data-target="locationSection" href="#">Location</a></li>
+            <li class="nav-item"><a class="nav-link" data-target="chargecodesSection" href="#">Charge Codes</a></li>
+            <li class="nav-item"><a class="nav-link" data-target="summarySection" href="#">Summary</a></li>
+            <li class="nav-item"><a class="nav-link" data-target="preferenceSection" href="#">Preference</a></li>
+			<li class="nav-item"><a class="nav-link" data-target="payslip" href="#">PaySlip</a></li>
+        </ul>
+    
+        <!-- Date Controls -->
+         <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-sm" id="prevPeriod"><</button>
+            <select class="form-select form-select-sm w-auto" id="periodDropdown"></select>
+            <button class="btn btn-sm" id="nextPeriod">></button>
+            <input type="date" class="form-control form-control-sm w-auto" id="calendarPicker">
+            
+            <!-- Printer Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="25" fill="currentColor" class="bi bi-printer-fill" viewBox="0 0 16 16">
+                <path d="M5 1a2 2 0 0 0-2 2v1h10V3a2 2 0 0 0-2-2zm6 8H5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1"/>
+                <path d="M0 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v-2a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2H2a2 2 0 0 1-2-2zm2.5 1a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Section 3: Controls -->
+    <div class="controls-section d-flex justify-content-between align-items-center p-3 bg-light border-bottom">
+        <div class="d-flex gap-3">
+            <!-- Save Icon -->
+			<svg id="saveIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-floppy-fill" viewBox="0 0 16 16">
+				<title>Save Timesheet</title>   
+			      <path d="M0 1.5A1.5 1.5 0 0 1 1.5 0H3v5.5A1.5 1.5 0 0 0 4.5 7h7A1.5 1.5 0 0 0 13 5.5V0h.086a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5H14v-5.5A1.5 1.5 0 0 0 12.5 9h-9A1.5 1.5 0 0 0 2 10.5V16h-.5A1.5 1.5 0 0 1 0 14.5z"/>
+			       <path d="M3 16h10v-5.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5zm9-16H4v5.5a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5zM9 1h2v4H9z"/>
+			  </svg>
+    
+            <!-- Delete Icon -->
+            <svg id="deleteIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+				<title>Delete Row</title>
+                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+            </svg>
+			
+			<!-- Set Template -->
+			<i class="bi bi-copy" id="templateIcon" title="Set Template"></i> 
+			
+            <!-- Add Row Icon -->
+            <svg  xmlns="http://www.w3.org/2000/svg" id="addRow" width="26" height="26" fill="currentColor" class="bi bi-plus-circle-dotted" viewBox="0 0 16 16" >
+				<title>Add Row</title>
+                <path d="M8 0q-.264 0-.523.017l.064.998a7 7 0 0 1 .918 0l.064-.998A8 8 0 0 0 8 0M6.44.152q-.52.104-1.012.27l.321.948q.43-.147.884-.237L6.44.153zm4.132.271a8 8 0 0 0-1.011-.27l-.194.98q.453.09.884.237zm1.873.925a8 8 0 0 0-.906-.524l-.443.896q.413.205.793.459zM4.46.824q-.471.233-.905.524l.556.83a7 7 0 0 1 .793-.458zM2.725 1.985q-.394.346-.74.74l.752.66q.303-.345.648-.648zm11.29.74a8 8 0 0 0-.74-.74l-.66.752q.346.303.648.648zm1.161 1.735a8 8 0 0 0-.524-.905l-.83.556q.254.38.458.793l.896-.443zM1.348 3.555q-.292.433-.524.906l.896.443q.205-.413.459-.793zM.423 5.428a8 8 0 0 0-.27 1.011l.98.194q.09-.453.237-.884zM15.848 6.44a8 8 0 0 0-.27-1.012l-.948.321q.147.43.237.884zM.017 7.477a8 8 0 0 0 0 1.046l.998-.064a7 7 0 0 1 0-.918zM16 8a8 8 0 0 0-.017-.523l-.998.064a7 7 0 0 1 0 .918l.998.064A8 8 0 0 0 16 8M.152 9.56q.104.52.27 1.012l.948-.321a7 7 0 0 1-.237-.884l-.98.194zm15.425 1.012q.168-.493.27-1.011l-.98-.194q-.09.453-.237.884zM.824 11.54a8 8 0 0 0 .524.905l.83-.556a7 7 0 0 1-.458-.793zm13.828.905q.292-.434.524-.906l-.896-.443q-.205.413-.459.793zm-12.667.83q.346.394.74.74l.66-.752a7 7 0 0 1-.648-.648zm11.29.74q.394-.346.74-.74l-.752-.66q-.302.346-.648.648zm-1.735 1.161q.471-.233.905-.524l-.556-.83a7 7 0 0 1-.793.458zm-7.985-.524q.434.292.906.524l.443-.896a7 7 0 0 1-.793-.459zm1.873.925q.493.168 1.011.27l.194-.98a7 7 0 0 1-.884-.237zm4.132.271a8 8 0 0 0 1.012-.27l-.321-.948a7 7 0 0 1-.884.237l.194.98zm-2.083.135a8 8 0 0 0 1.046 0l-.064-.998a7 7 0 0 1-.918 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+            </svg>
+			
+		
+        </div> 
+
+    
+        <div class="col-6 d-flex justify-content-end gap-3 ">
+              
+            <button class="btn btn-success" id="sendApprovalBtn">Send Approval</button>
+            <button id="submitBtn" class="btn btn-info">Submit</button>
+        </div>
+    </div>
+
+    <p id="selectedPeriod" style="font: bold; font-weight: 600;">Selected Period:</p>
+    <div id="timeSection" class="content-section">
+        <table class="table table-bordered" style="padding: 0px !important;">
+            <thead id="tableHeaders" style="padding: 0px !important;">
+                <tr style="padding: 0px;"></tr>
+            </thead>
+            <tbody id="tableBody" style="padding: 0px !important;"></tbody>
+            <tfoot id="tableFooter" style="padding: 0px !important;">
+                <tr></tr>
+            </tfoot> 
+        </table>
+    </div>
+
+
+
+<!-- Expense Section UI -->
+<div id="expenseSection" class="content-section" style="display: none; padding: 20px;">
+    <h3 class="text-primary">Expense Section</h3>
+    
+    <!-- Add Expense Button -->
+    <button id="addExpenseBtn" class="btn btn-success">+ Add Expense</button>
+    
+    <!-- Expense Form (Initially Hidden) -->
+    <div id="expenseForm" class="card p-3 mt-3" style="display: none;">
+        <h5>Add Expense</h5>
+        <form id="expenseFormElement">
+            
+            <!-- Period (Auto-filled) -->
+            <div class="mb-3">
+                <label class="form-label">Period</label>
+                <input type="text" id="expensePeriod" class="form-control" readonly>
+            </div>
+            
+            <!-- Expense Type -->
+            <div class="mb-3">
+                <label class="form-label" >Expense Type</label>
+                <select id="expenseType" class="form-select" required>
+                    <option value="">Select Type</option>
+              
+                </select>
+            </div>
+            
+            <!-- Amount -->
+            <div class="mb-3">
+                <label class="form-label">Amount(INR)</label>
+                <input type="number" id="expenseAmount" class="form-control" placeholder="Enter Amount" required>
+            </div>
+			
+			<div class="mb-3">
+			      <label class="form-label">Invoice Number</label>
+			       <input type="text" id="expenseInvoice" class="form-control" placeholder="Transaction ID" required>
+			 </div>
+					   
+			<div class="mb-3">
+				<label class="form-label">GST Number</label>
+				<input type="text" id="expenseGST" class="form-control" placeholder="GST Number (optional)">
+			 </div>
+            
+            <!-- Receipt Upload -->
+            <div class="mb-3">
+                <label class="form-label">Upload Receipt</label>
+                <input type="file" id="expenseReceipt" class="form-control" required>
+            </div>
+            
+            <!-- Description -->
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea id="expenseDescription" class="form-control" placeholder="Enter description (optional)"></textarea>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="d-flex gap-2">
+                <button type="button" id="saveExpenseBtn" class="btn btn-primary">Save</button>
+                <button type="button" id="cancelExpenseBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </form>
+    </div>
+	
+	<table id="expenseTable" border="1">
+	    <thead>
+	        <tr>
+	            <th>Period</th>
+	            <th>Expense Type</th>
+	            <th>Invoice</th>
+	            <th>GST</th>
+	            <th>Description</th>
+				<th>Amount</th>
+				<th>Receipt</th>
+				<th>Action</th>
+	        </tr>
+	    </thead>
+	    <tbody>
+	        <!-- Expense data will be inserted here -->
+	    </tbody>
+	</table>
+
+</div>
+
+
+<!-- Section for Location -->
+<div id="locationSection" class="content-section" style="display: none;">
+    <h3>Location Section</h3>
+    <p>This is where location details will go.</p>
+</div>
+
+
+	
+<!-- Section for Charge Codes in Employee Page -->
+<div id="chargecodesSection" class="content-section" style="display: none; padding: 20px;">
+    
+    <!-- Header Section with Sorting Dropdown -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="text-primary">Charge Code List</h3>
+        <select id="projectTypeFilter" class="form-select w-auto">
+            <option value="All">All</option>
+            <option value="External">External</option>
+            <option value="Internal">Internal</option>
+        </select>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="summary-table table-bordered w-100">
+            <thead>
+                <tr style="color: white;">
+                 
+                    <th>Code Type</th>
+                    <th>Code</th>
+                    <th>Client Name</th>
+                    <th>Description</th>
+                    <th>Project Type</th>
+                    <th>Start Date</th>
+                    <th>Country</th>
+                </tr>
+            </thead>
+            <tbody id="employee-code-table-body" class="table-group-divider"></tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- Section for Summary -->
+<div id="summarySection" class="content-section" style="display: none;">
+	<div id="summarySection">
+	    <h2 style="text-align: center;">General Summary</h2>
+	    <table class="summary-table">
+	        <thead>
+	            <tr>
+	                <th>Charge Code</th>
+	                <th>Working Hours</th>
+	                <th>Total Expense</th>
+	                <th>Absences Hours</th>
+	            </tr>
+	        </thead>
+	        <tbody id="summaryBody">
+	            <!-- Data will be inserted here dynamically -->
+	        </tbody>
+	        <tfoot>
+	            <tr>
+	                <td>Total Hours</td>
+	                <td id="totalHours">0</td>
+	                <td id="totalExpense">0</td>
+	                <td id="totalAbsences">0</td>
+	            </tr>
+				
+	            <tr>
+	                <td>Standard Allocated Hours</td>
+	                <td id="standardHours">0</td>
+	                <td>-</td>
+	                <td>-</td>
+	            </tr>
+				
+				<tr>
+				    <td>Total Working Hours</td>
+					<td id="totalworking">0</td>
+					<td>-</td>
+					<td>-</td>
+				</tr>
+	        </tfoot>
+	    </table>
+
+	    <h3 style="text-align: center;">Location Summary</h3>
+	    <table class="summary-table" >
+	        <thead>
+	            <tr>
+	                <th>Country</th>
+	                <th>Location</th>
+	                <th>Total Hours</th>
+	            </tr>
+	        </thead>
+	        <tbody>
+	            <tr> 
+	                <td>India</td>
+	                <td>Salem - 00 | Company code - 001  - Salem</td>
+	                <td id="locationTotalHours">0</td>
+	            </tr>
+	        </tbody>
+	    </table>
+	</div>
+ 
+	
+	<div id="contributionSummary" style="
+	    margin-top: 30px;
+	    background: #f9f9f9;
+	    border-radius: 10px;
+	    padding: 25px 30px;
+	    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+	    max-width: 600px;
+	    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+		">
+
+	    <h3 id="annualContribution" style="
+	        font-weight: bold;
+	        color: #003366;
+	        margin-bottom: 10px;">
+	        Annual Chargeability Contribution: 
+	    </h3>
+
+	    <p id="leaveBalanceDate" style="
+	        font-size: 14px;
+	        color: #666;
+	        margin-bottom: 20px;">
+	        As of today, you have the following leave balances:
+	    </p>
+
+		<ul style="list-style-type: none; padding-left: 0; line-height: 1.8; font-size: 16px; color: #333; align-items: start;">
+		  <li>
+		    <span id="earnedLeave">Earned Casual Leave: --</span>
+		    <span class="info-icon" onclick="toggleTooltip(this)">ℹ️
+				<span class="tooltip-text">If casual leave is not taken in a given month, it will be converted into earned casual leave.</span>
+		    </span>
+		  </li>
+
+		  <li>
+		    <span id="remainingSick">Remaining Sick Leave: </span>
+		    <span class="info-icon" onclick="toggleTooltip(this)">ℹ️
+				<span class="tooltip-text">Sick leave can be availed with a valid reason or medical certificate, limited to 6 days per year.</span>
+		    </span>
+		  </li>
+
+		  <li>
+		    <span id="remainingFloating">Remaining Floating Leave:</span>
+		    <span class="info-icon" onclick="toggleTooltip(this)">ℹ️
+				<span class="tooltip-text">Floating leave can be used for optional government holidays, limited to 2 days per year.</span>
+		    </span>
+		  </li>
+
+		  <li>
+		    <span id="remainingCasual">Remaining Casual Leave: --</span>
+		    <span class="info-icon" onclick="toggleTooltip(this)">ℹ️
+				<span class="tooltip-text">If earned casual leave is 0, only one casual leave is allowed per month. Taking more casual leaves without available earned CL will automatically result in loss of pay (LOP) for the month. So please enter carefully.</span>
+		    </span>
+		  </li>
+
+		  <li style="color: #cc0000; font-weight: 500;">
+		    <span id="paidLeave">Loss of Pay: </span>
+		    <span class="info-icon" onclick="toggleTooltip(this)">ℹ️
+				<span class="tooltip-text">Please select LOP if no eligible leaves are available.</span>
+		    </span>
+		  </li>
+		</ul>
+	</div>
+
+	
+	</div>
+
+	<!-- Section for Preference -->
+	<div id="preferenceSection" class="content-section" style="display: none;">
+	    <h3 class="text-center mb-4">Preference Section</h3>
+	    <p class="text-center text-muted">Adjust your preferences here.</p>
+
+	    <div class="container preference-container">
+	        <!-- Approvers -->
+	        <div class="row preference-row">
+	            <div class="col-md-5">
+	                <label class="form-label">Approvers</label>
+	                <div class="dropdown">
+	                    <button class="btn btn-light dropdown-toggle form-control" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="approversDropdown">
+	                        Select Approver
+	                    </button>
+	                    <ul class="dropdown-menu" id="approversList"></ul>
+	                </div>
+	            </div>
+	            <div class="col-md-2 d-flex flex-column align-items-center justify-content-center">
+	               <!--  <button class="btn btn-primary btn-sm mb-2" onclick="addApprover()">➝</button> -->
+	                <button class="btn btn-danger btn-sm" onclick="removeLastEntry('selectedApprovers')">←</button>
+	            </div>
+	            <div class="col-md-5">
+	                <label class="form-label">Selected Approvers</label>
+	                <textarea class="form-control selected-box" id="selectedApprovers" readonly></textarea>
+	            </div>
+	        </div>
+
+	        <!-- Reviewers -->
+	        <div class="row preference-row">
+	            <div class="col-md-5">
+	                <label class="form-label">Reviewer</label>
+	                <div class="dropdown">
+	                    <button class="btn btn-light dropdown-toggle form-control" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="reviewersDropdown">
+	                        Select Reviewer
+	                    </button>
+	                    <ul class="dropdown-menu" id="reviewersList"></ul>
+	                </div>
+	            </div>
+	            <div class="col-md-2 d-flex flex-column align-items-center justify-content-center">
+	                <!-- <button class="btn btn-primary btn-sm mb-2" onclick="addReviewer()">➝</button> -->
+	                <button class="btn btn-danger btn-sm" onclick="removeLastEntry('selectedReviewers')">←</button>
+	            </div>
+	            <div class="col-md-5">
+	                <label class="form-label">Selected Reviewers</label>
+	                <textarea class="form-control selected-box" id="selectedReviewers" readonly></textarea>
+	            </div>
+	        </div>
+
+	        <!-- Delegators -->
+	        <div class="row preference-row">
+	            <div class="col-md-5">
+	                <label class="form-label">Delegators</label>
+	                <div class="dropdown">
+	                    <button class="btn btn-light dropdown-toggle form-control" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="delegatorsDropdown">
+	                        Select Delegator
+	                    </button>
+	                    <ul class="dropdown-menu" id="delegatorsList"></ul>
+	                </div>
+	            </div>
+	            <div class="col-md-2 d-flex flex-column align-items-center justify-content-center">
+	                <!-- <button class="btn btn-primary btn-sm mb-2" onclick="addDelegator()">➝</button> -->
+	                <button class="btn btn-danger btn-sm" onclick="removeLastEntry('selectedDelegators')">←</button>
+	            </div>
+	            <div class="col-md-5">
+	                <label class="form-label">Selected Delegators</label>
+	                <textarea class="form-control selected-box" id="selectedDelegators" readonly></textarea>
+	            </div>
+	        </div>
+
+	        <!-- Buttons Section -->
+	        <div class="text-center mt-4">
+	            <button class="btn btn-secondary me-2" onclick="resetPreferences()">Reset</button>
+	            <button class="btn btn-success" onclick="savePreferences()">Save</button>
+	        </div>
+	    </div>
+	</div>
+
+	
+
+	
+	<div id="customAlert" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+	    <div id="alertToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+	        <div class="d-flex">
+	            <div class="toast-body" id="alertMessage">
+	                <!-- Alert Message Will Appear Here -->
+	            </div>	
+	            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+	        </div>
+	    </div>
+	</div>
+	
+	
+	
+	<!-- Section for PaySlip -->
+	<div id="payslip" class="container-fluid content-section" style="display: none; padding: 30px; background-color: #f8f9fa;">
+
+	  <!-- Payslip Summary -->
+	  <div class="card shadow-sm mb-4 border-0">
+	    <div class="card-body">
+	      <h4 class="card-title text-primary mb-4">Payslip Summary for FY 2025 -26</h4>
+	      <div class="row g-3">
+
+	        <div class="col-md-4">
+	          <label class="form-label text-muted mb-0">Employee Name</label>
+	          <div class="fw-bold" id="summaryUsername">-</div>
+	        </div>
+
+	        <div class="col-md-4">
+	          <label class="form-label text-muted mb-0">Designation</label>
+	          <div class="fw-bold" id="summaryDesignation">-</div>
+	        </div>
+
+	        <div class="col-md-4">
+	          <label class="form-label text-muted mb-0">Month</label>
+	          <div class="fw-bold" id="summaryMonth">-</div>
+	        </div>
+
+	        <div class="col-md-4">
+	          <label class="form-label text-muted mb-0">Standard Work Days</label>
+	          <div class="fw-bold" id="summaryStdWorkDays">-</div>
+	        </div>
+
+	        <div class="col-md-4">
+	          <label class="form-label text-muted mb-0">Total Leaves</label>
+	          <div class="fw-bold" id="summaryTotalLeaves">-</div>
+	        </div>
+			
+
+			<div class="col-md-4">
+			  <label class="form-label text-muted mb-0">LOP</label>
+			  <div class="fw-bold" id="summaryLOP">-</div>
+			</div>
+
+	        <div class="col-md-4">
+	          <label class="form-label text-muted mb-0">Working Days</label>
+	          <div class="fw-bold" id="summaryWorkingDays">-</div>
+	        </div>
+
+
+	        <div class="col-md-4">
+	          <label class="form-label text-muted mb-0">Basic Salary</label>
+	          <div class="fw-bold text-success" id="summaryBasicSalary">₹-</div>
+	        </div>
+
+	        <div class="col-md-4">
+	          <label class="form-label text-muted mb-0">Deductions</label>
+	          <div class="fw-bold text-danger" id="summaryDeductions">₹-</div>
+	        </div>
+
+	        <div class="col-md-4">
+	          <label class="form-label text-muted mb-0">Net Pay</label>
+	          <div class="fw-bold text-primary fs-5" id="summaryNetPay">₹-</div>
+	        </div>
+
+	      </div>
+	    </div>
+	  </div>
+
+	  <!-- Bank Details -->
+	  <div class="card shadow-sm mb-4 border-0">
+	    <div class="card-body">
+	      <div class="d-flex justify-content-between align-items-center mb-3">
+	        <h4 class="card-title text-primary mb-0">Bank Details</h4>
+	        <button id="bankUpdateBtn" class="btn btn-outline-primary btn-lg" onclick="openBankEditModal()">Update</button>
+	      </div>
+
+	      <div class="row g-3">
+	        <div class="col-md-6">
+	          <label class="form-label text-muted mb-0">Account Holder Name</label>
+	          <div class="fw-bold" id="bankAccountHolder">-</div>
+	        </div>
+	        <div class="col-md-6">
+	          <label class="form-label text-muted mb-0">Account Number</label>
+	          <div class="fw-bold" id="bankAccountNumber">-</div>
+	        </div>
+	        <div class="col-md-6">
+	          <label class="form-label text-muted mb-0">IFSC Code</label>
+	          <div class="fw-bold" id="bankIFSC">-</div>
+	        </div>
+	        <div class="col-md-6">
+	          <label class="form-label text-muted mb-0">Bank Name</label>
+	          <div class="fw-bold" id="bankName">-</div>
+	        </div>
+
+			<div>
+				<label class="form-label text-muted mb-0">Uploaded Bank Book</label>
+			  <img id="bankBookPhoto" src="#" alt="Bank Book"
+			       class="img-fluid rounded border"
+			       style="max-width: 300px; display: none; cursor: pointer;"
+			       onclick="openPhotoModal()" />
+			</div>
+	      </div>
+	    </div>
+	  </div>
+
+	  <!-- Modal for Full Image View -->
+	  <div class="modal fade" id="bankPhotoModal" tabindex="-1" aria-hidden="true">
+	    <div class="modal-dialog modal-dialog-centered modal-lg">	   
+	      <div class="modal-content bg-dark">
+	        <div class="modal-body text-center p-0">
+	          <img id= "bankPhotoModalImg" src="#" class="img-fluid rounded" style="max-height: 80vh;" />
+	        </div>
+	        <div class="modal-footer border-0 justify-content-center">
+	          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+	        </div>
+	      </div>
+	    </div>
+	  </div>
+
+	  <!-- Download Button -->
+	  <div class="text-end">	
+	    <button class="btn btn-success btn-lg px-4" onclick="downloadPayslip()">
+	      <i class="bi bi-download"></i> Download Payslip
+	    </button>
+	  </div>
+	</div>
+
+
+	<!-- Bank Edit Modal -->
+	<div class="modal fade" id="bankEditModal" tabindex="-1" aria-labelledby="bankEditModalLabel" aria-hidden="true">
+	  <div class="modal-dialog">
+	    <div class="modal-content">
+	    
+	      <div class="modal-header">
+	        <h5 class="modal-title">Bank Details</h5>
+	        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	      </div>
+	      
+	      <div class="modal-body">
+	        <form id="bankEditForm">
+	        
+	          <div class="mb-2">
+	            <label class="form-label">Account Holder Name</label>
+	            <input type="text" class="form-control" id="inputAccountHolder">
+	            <div class="text-danger small" id="errorAccountHolder"></div>
+	          </div>
+
+			  <!-- Account Number Field -->
+			  <div class="mb-2 position-relative">
+			    <label class="form-label">Account Number</label>
+			    <input type="password" class="form-control" id="inputAccountNumber"
+			           oninput="validateAccountNumber('inputAccountNumber', 'errorAccountNumber')"
+			           onpaste="handleBlock(event, 'errorAccountNumber')"
+			           oncopy="handleBlock(event, 'errorAccountNumber')"
+			           oncut="handleBlock(event, 'errorAccountNumber')">
+			    <div class="text-danger small" id="errorAccountNumber"></div>
+			  </div>
+			  <input type="hidden" id="fullAccountNumber">
+
+			  <!-- Confirm Account Number Field -->
+			  <div class="mb-2 position-relative">
+			    <label class="form-label">Confirm Account Number</label>
+			    <input type="text" class="form-control" id="inputConfirmAccountNumber"
+			           oninput="validateAccountNumber('inputConfirmAccountNumber', 'errorConfirmAccountNumber')"
+			           onpaste="handleBlock(event, 'errorConfirmAccountNumber')"
+			           oncopy="handleBlock(event, 'errorConfirmAccountNumber')"
+			           oncut="handleBlock(event, 'errorConfirmAccountNumber')">
+			    <div class="text-danger small" id="errorConfirmAccountNumber"></div>
+			  </div>
+
+	          <div class="mb-2">
+	            <label class="form-label">IFSC Code</label>
+	            <input type="text" class="form-control" id="inputIFSC">
+	            <div class="text-danger small" id="errorIFSC"></div>
+	          </div>
+
+	          <div class="mb-2">
+	            <label class="form-label">Bank Name</label>
+	            <input type="text" class="form-control" id="inputBankName">
+	            <div class="text-danger small" id="errorBankName"></div>
+	          </div>
+			  
+			  <!-- 🆕 Bank Book Photo Upload -->
+			           <div class="mb-3">
+			             <label for="inputBankBook" class="form-label">Upload Bank Book Photo</label>
+			             <input type="file" class="form-control" id="inputBankBook" accept="image/png, image/jpeg" />
+			             <div class="text-danger small" id="errorBankBook"></div>
+			             <img id="inputBankBookPreview" src="#" class="img-fluid rounded mt-2 border" style="max-width: 200px; display: none;" />
+			           </div>
+			  
+	        
+	        </form>
+	      </div>
+	      
+	      <div class="modal-footer">
+	        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+	        <button class="btn btn-success" onclick="saveBankDetails()">Save</button>
+	      </div>
+	    
+	    </div>
+	  </div>
+	</div>
+
+	
+	<!-- Confirmation Modal for Bank -->
+	<div class="modal fade" id="confirmBankModal" tabindex="-1" aria-labelledby="confirmBankModalLabel" aria-hidden="true">
+	  <div class="modal-dialog">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title">Confirm Save</h5>
+	        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	      </div>
+	      <div class="modal-body">
+	        <p id="confirmBankText"></p>
+			<p id="bankWarningNote" class="text-danger small mb-0"></p>
+	      </div>
+	      <div class="modal-footer">
+	        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+	        <button class="btn btn-success" id="confirmSaveBank">Confirm</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	
+	<!-- Delete Confirmation Modal (Unique ID & Class) -->
+	<div id="deleteRowModal" class="modal delete-row-modal" tabindex="-1" aria-labelledby="deleteRowModalLabel" aria-hidden="true">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <h5 class="modal-title" id="deleteRowModalLabel">Confirm Delete</h5>
+	                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	            </div>
+	            <div class="modal-body">
+	                <p id="deleteRowMessage"></p>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-danger" id="confirmDeleteRow">Yes, Delete</button>
+	                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+
+
+	<!-- Save Confirmation Modal -->
+	<div id="saveTimesheetModal" class="modal save-timesheet-modal" tabindex="-1" aria-labelledby="saveTimesheetModalLabel" aria-hidden="true">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <h5 class="modal-title" id="saveTimesheetModalLabel">Confirm Save</h5>
+	                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	            </div>
+	            <div class="modal-body">
+	                <p id="saveTimesheetMessage"></p>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-primary" id="confirmSaveTimesheet">Save</button>
+	                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+	<!-- Approval Confirmation Modal -->
+	<div id="approvalModal" class="modal fade" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <h5 class="modal-title" id="approvalModalLabel">Confirm Timesheet Submission</h5>
+	                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	            </div>
+	            <div class="modal-body">
+	                <p><strong>Are you sure you want to send the timesheet for review for the period  <span id="selectedPeriodText"></span>?</strong> </p>
+	                <p class="text-danger"><strong>Note:</strong></p>
+	                <p class="text-danger">
+	                    Please make sure your save the timesheet before sending and all entered details are correct. If incorrect, it may affect your salary, and we are not responsible for that!
+	                </p>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-primary" id="confirmApproval">Send for Approval</button>
+	                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+	
+	<!-- Approval Confirmation Modal -->
+	<div id="submitModal" class="modal fade" tabindex="-1" aria-labelledby="submitModalLabel" aria-hidden="true">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <h5 class="modal-title" id="submitModalLabel">Confirm Timesheet Submission</h5>
+	                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	            </div>
+	            <div class="modal-body">
+	                <p><strong>Are you sure you want to Submit this Timesheet on this period  <span id="selectedPeriodText2"></span>?</strong> </p>
+	                <p class="text-danger"><strong>Note:</strong></p>
+	                <p class="text-danger">
+	                     Please ensure you save the timesheet before sending it and verify that all entered details, including leaves, are correct. Incorrect entries may lead to timesheet rejection and could affect your salary, for which we are not responsible.
+	                </p>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-primary" id="confirmsubmit">Submit</button>
+	                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+
+	<!-- Bootstrap Confirmation Modal -->
+	<div class="modal fade" id="confirmExpenseModal" tabindex="-1" aria-labelledby="confirmExpenseModalLabel" aria-hidden="true">
+	  <div class="modal-dialog">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="confirmExpenseModalLabel">Confirm Expense Save</h5>
+	        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	      </div>
+	      <div class="modal-body">
+	        <p id="confirmExpenseText"></p>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+	        <button type="button" class="btn btn-primary" id="confirmSaveExpense">Save Expense</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	
+
+	<!-- Logout Confirmation Modal -->
+	<div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmModalLabel" aria-hidden="true">
+	  <div class="modal-dialog">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="logoutConfirmModalLabel">Confirm Logout</h5>
+	        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	      </div>
+	      <div class="modal-body">
+	        <p id="logoutMessage">Are you sure you want to logout?</p>
+	      </div>
+	      <div class="modal-footer">
+	        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+	        <button class="btn btn-danger" id="confirmLogoutBtn">Logout</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+
+	<div id="loader" class="loader-container">
+	    <div class="spinner-border text-primary" role="status">
+	        <span class="visually-hidden">Loading...</span>
+	    </div>
+	</div>
+
+
+<script>
+	
+	document.addEventListener("DOMContentLoaded", function () {
+	    const calender = document.getElementById('calendarPicker');
+	    const preview = document.getElementById('prevPeriod');
+	    const nextpre = document.getElementById('nextPeriod');
+	    const periodDropdown = document.getElementById("periodDropdown");
+	    const selectedPeriodElement = document.getElementById("selectedPeriod");
+
+	    function getSelectedPeriod() {
+	        return periodDropdown.options[periodDropdown.selectedIndex].text;
+	    }
+
+	    function updateSelectedPeriod() {
+	        selectedPeriodElement.textContent = "Selected Period: " + getSelectedPeriod();
+	    }
+
+	    updateSelectedPeriod();
+
+	    // Event listeners that trigger the update
+	    periodDropdown.addEventListener("change", updateSelectedPeriod);
+	    calender.addEventListener("change", updateSelectedPeriod);
+	    preview.addEventListener("click", updateSelectedPeriod);
+	    nextpre.addEventListener("click", updateSelectedPeriod);
+	});
+
+
+
+	
+	document.addEventListener("DOMContentLoaded", function () {
+		fetchBankDetails();
+	    const navLinks = document.querySelectorAll(".nav-link");
+
+	    navLinks.forEach(link => {
+	        link.addEventListener("click", function (event) {
+	            event.preventDefault();
+	            navLinks.forEach(l => l.classList.remove("active"));
+	            this.classList.add("active");
+
+	            const targetSectionId = this.getAttribute("data-target");
+
+	            // ✅ Save selected tab to localStorage
+	            localStorage.setItem("activeEmployeeTab", targetSectionId);
+
+	            // Show correct section
+	            document.querySelectorAll(".content-section").forEach(sec => sec.style.display = "none");
+	            const targetSection = document.getElementById(targetSectionId);
+	            if (targetSection) {
+	                targetSection.style.display = "block";
+	            }
+	        });
+	    });
+
+	    // ✅ Load last selected tab on refresh
+	    const lastTab = localStorage.getItem("activeEmployeeTab") || "timeSection";
+	    const defaultLink = document.querySelector(`.nav-link[data-target="${lastTab}"]`);
+	    if (defaultLink) defaultLink.click(); // Trigger the click to show the section
+	});
+
+
+	
+	function showAlert(message, type = 'success') {
+	    const alertToast = document.getElementById('alertToast');
+	    const alertMessage = document.getElementById('alertMessage');
+	    
+	    // Set message and type (success/error)
+	    alertMessage.textContent = message;
+	    alertToast.className = `toast align-items-center text-white bg-${type} border-0`;
+
+	    // Set a fixed dismiss duration for all toasts
+	    const toast = new bootstrap.Toast(alertToast, { delay: 3000 }); 
+	    toast.show();
+	}
+
+	
+	function showLoader() {
+	    document.getElementById("loader").style.display = "flex";
+	}
+
+	function hideLoader() {
+	    document.getElementById("loader").style.display = "none";
+	}
+	
+	
+	document.addEventListener("DOMContentLoaded", function () {
+		const approvebtn = document.getElementById('sendApprovalBtn');
+		const submitbtn = document.getElementById('submitBtn');
+		const addname = sessionStorage.getItem('userAddRole');
+		if (addname === "-") {
+			submitbtn.disabled = true;
+			submitbtn.style.display="none";
+		}  
+		else{
+			submitbtn.disabled = false;
+			approvebtn.disabled = true;
+			approvebtn.style.display="none";
+		}
+		});
+
+		   
+		   
+	document.addEventListener("DOMContentLoaded", function () {
+
+	    const saveIcon = document.querySelector(".bi-floppy-fill");
+	    const deleteIcon = document.querySelector(".bi-trash");
+	    const addRowIcon = document.getElementById("addRow");
+		const templateIcon = document.getElementById("templateIcon");
+
+	    function updateIcons() {
+	        const activeSection = document.querySelector(".content-section:not([style*='display: none'])");
+
+	        if (!activeSection) return; // No active section, do nothing
+
+	        // **Show/Hide Icons Instead of Removing Them**
+	        if (activeSection.id === "timeSection") {
+	            saveIcon.style.display = "inline-block";
+	            deleteIcon.style.display = "inline-block";
+	            addRowIcon.style.display = "inline-block"; // Keep addRow functional
+				templateIcon.style.display = "inline-block"
+	        } else if (activeSection.id === "locationSection" || activeSection.id === "preferenceSection") {
+	            saveIcon.style.display = "inline-block";
+	            deleteIcon.style.display = "inline-block";
+	            addRowIcon.style.display = "none"; // Hide addRow but keep it in DOM
+				templateIcon.style.display = "none"
+	        } else {
+	            saveIcon.style.display = "none";
+	            deleteIcon.style.display = "none";
+	            addRowIcon.style.display = "none";
+				templateIcon.style.display = "none"
+	        }
+	    }
+
+	    // Attach event listener to navigation links
+	    document.querySelectorAll(".nav-link").forEach(link => {
+	        link.addEventListener("click", function () {
+	            setTimeout(updateIcons, 100); // Delay for smooth transition
+	        });
+	    });
+
+	    // Run initially
+	    updateIcons();
+	});
+
+
+
+
+	          document.addEventListener("DOMContentLoaded", function() {
+		
+	          const userName = sessionStorage.getItem('userName');
+	         
+
+	          if (userName) {
+	              const userNameElement = document.getElementById('userName');
+	              userNameElement.innerText = userName;
+	              userNameElement.style.display = 'inline'; // Show the name under the icon
+	          }
+	      });
+
+		  // Function to toggle the dropdown menu visibility
+		  function toggleDropdown() { 
+		      const dropdown = document.getElementById('userDropdown');
+		      dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+		  }
+
+
+		  document.addEventListener('click', function(event) {
+		      const dropdown = document.getElementById('userDropdown');
+		      const userIcon = document.getElementById('userIcon');
+		      if (!userIcon.contains(event.target) && !dropdown.contains(event.target)) {
+		          dropdown.style.display = 'none';
+		      }
+		  });
+		  
+
+		  /*change password with otp*/
+		  		
+		  		let otp; // This will store the OTP sent to the email
+		  		let otpTimer; // To store the timer for OTP expiration
+		  		let countdown = 120; // 2 minutes countdown in seconds
+
+		  		// Function to update the timer display
+		  		function updateTimerDisplay() {
+		  		    const timerDisplay = document.getElementById('timerDisplay');
+		  		    if (timerDisplay) {
+		  		        const minutes = Math.floor(countdown / 60);
+		  		        const seconds = countdown % 60;
+		  		        timerDisplay.innerText = `Time remaining: ${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+		  		    }
+		  		}
+				
+				function startOtpCountdown() {
+				    countdown = 120;
+				    updateTimerDisplay();
+				    clearInterval(otpTimer); // Reset previous timer if any
+
+				    // Show "Change Password" and hide "Resend OTP"
+				    document.getElementById('changePasswordBtn').style.display = 'inline-block';
+				    document.getElementById('resendOtpBtn').style.display = 'none';
+
+				    otpTimer = setInterval(() => {
+				        countdown--;
+				        updateTimerDisplay();
+				        if (countdown <= 0) {
+				            clearInterval(otpTimer);
+
+				            // Time over: hide "Change Password" and show "Resend OTP"
+				            document.getElementById('changePasswordBtn').style.display = 'none';
+				            document.getElementById('resendOtpBtn').style.display = 'inline-block';
+				        }
+				    }, 1000);
+				}
+
+				
+				const otpModalEl = document.getElementById('otpModal');
+				const changePasswordModalEl = document.getElementById('changePasswordModal');
+
+				const otpModal = new bootstrap.Modal(otpModalEl, {
+				    backdrop: 'static',
+				    keyboard: false
+				});
+
+				const changePasswordModal = new bootstrap.Modal(changePasswordModalEl, {
+				    backdrop: 'static',
+				    keyboard: false
+				});
+
+
+				otpModalEl.addEventListener('hidden.bs.modal', () => {
+				    // Show changePasswordModal only if OTP wasn't successful
+				    if (!document.getElementById('otp').value || document.getElementById('changePasswordBtn').style.display === 'none') {
+				        changePasswordModal.show(); // ✅ Reopen Change Password Modal with filled values
+				    }
+				});
+
+
+		  		// Event listener for opening the change password modal
+		  		document.getElementById('userDropdown').addEventListener('click', function (e) {
+		  		    if (e.target.innerText === 'Change Password') {
+		  		        // Open the modal when 'Change Password' is clicked
+					changePasswordModal.show();
+		  		    }
+		  		});
+
+		  		// Send OTP when the "Send OTP" button is clicked
+		  		document.getElementById('sendOtpBtn').addEventListener('click', function () {
+		  		    const newPassword = document.getElementById('newPassword').value;
+		  		    const confirmPassword = document.getElementById('confirmPassword').value;
+		  		    const passwordError = document.getElementById('passwordError');
+				 		        
+		  		    
+		  		    // Hide previous error message
+		  		    passwordError.style.display = 'none';
+
+		  		    // Validate password fields
+		  		    if (!newPassword || !confirmPassword) {
+		  		        passwordError.style.display = 'block';
+		  		        passwordError.innerHTML = "Both fields are required.";
+		  		        return;
+		  		    }
+
+		  		    if (newPassword !== confirmPassword) {
+		  		        passwordError.style.display = 'block';
+		  		        passwordError.innerHTML = "Passwords do not match.";
+		  		        return;
+		  		    }
+
+					showLoader();
+					
+		  		    // Send the request to the backend to send OTP to the user's email
+		  		    const email = sessionStorage.getItem('userName');  // Get the email of the logged-in user
+
+		  		    fetch("/send-otp", {
+		  		        method: "POST",
+		  		        headers: {
+		  		            "Content-Type": "application/json"
+		  		        },
+		  		        body: JSON.stringify({ email: email })
+		  		    })
+		  		    .then(response => response.json())
+		  		    .then(result => {
+		  		        if (result.success) {
+		  		            otp = result.otp;
+							changePasswordModal.hide();  // Store the OTP
+							otpModal.show();
+
+		  		            // Start the countdown timer
+							startOtpCountdown();
+
+		  		        } else {
+		  		            showAlert("Failed to send OTP. Please try again.", "danger");
+		  		        }
+		  		    })
+		  		    .catch(error => {
+		  		        console.error("Error:", error);
+		  		        showAlert("An error occurred. Please try again later.", "danger");
+		  		    })
+					.finally(() => hideLoader());
+		  		});
+
+		  		// Resend OTP functionality
+		  		document.getElementById('resendOtpBtn').addEventListener('click', function() {
+		  		    // Trigger the same functionality as the "Send OTP" button
+		  		    document.getElementById('sendOtpBtn').click();
+		  		    // Hide the Resend OTP button after clicking
+		  		    document.getElementById('resendOtpBtn').style.display = 'none';
+		  		});
+
+		  		// Change password after OTP validation
+		  		document.getElementById('changePasswordBtn').addEventListener('click', function () {
+		  		    const enteredOtp = document.getElementById('otp').value;
+		  		    const otpError = document.getElementById('otpError');
+
+		  		    otpError.style.display = 'none';
+
+		  		    // Validate OTP
+		  		    if (!enteredOtp) {
+		  		        otpError.style.display = 'block';
+		  		        otpError.innerHTML = "OTP is required.";
+		  		        return;
+		  		    }
+
+					showLoader();
+		  		    // Send the OTP and password to the backend for validation
+		  		    const newPassword = document.getElementById('newPassword').value;
+
+		  		    fetch("/change-password", {
+		  		        method: "POST",
+		  		        headers: {
+		  		            "Content-Type": "application/json"
+		  		        },
+		  		        body: JSON.stringify({
+		  		            email: sessionStorage.getItem('userName'),
+		  		            newPassword: newPassword,
+		  		            otp: enteredOtp
+		  		        })
+		  		    })
+		  		    .then(response => response.json())
+					.then(result => {
+					    if (result.success) {
+					        showAlert("Your password was changed successfully.", "success");
+
+					        // ✅ Hide OTP modal
+							otpModal.hide();
+							changePasswordModal.hide();
+
+					        // Clear fields
+					        document.getElementById('otp').value = '';
+					        document.getElementById('newPassword').value = '';
+					        document.getElementById('confirmPassword').value = '';
+
+					        // Reset buttons
+					        document.getElementById('resendOtpBtn').style.display = 'none';
+					        document.getElementById('sendOtpBtn').style.display = 'inline-block';
+					    } else {
+					        showAlert("Incorrect OTP,  Enter Correctly..!.", "danger");
+					    }
+					})
+		  		    .catch(error => {
+		  		        console.error("Error:", error);
+		  		        showAlert("An error occurred. Please try again later.", "danger");
+		  		    })
+					.finally(() => hideLoader());
+		  		});
+
+				
+				/*script for logout*/
+				document.getElementById('logout').addEventListener('click', function(event) {
+				    event.preventDefault();
+
+				    const userName = sessionStorage.getItem('userName') || 'User';
+				    const logoutMessage = `Are you sure you want to logout from TimeX, "${userName}"?`;
+				    document.getElementById('logoutMessage').innerText = logoutMessage;
+
+				    const logoutModal = new bootstrap.Modal(document.getElementById('logoutConfirmModal'));
+				    logoutModal.show();
+				});
+
+
+				document.getElementById('confirmLogoutBtn').addEventListener('click', function() {
+				    sessionStorage.clear();
+					localStorage.clear();
+				    window.location.href = '/login'; 
+				});
+				
+				
+				
+				   /*script for swtching role*/
+				   
+				 document.getElementById('userDropdown').addEventListener('click', function (e) {
+				       event.preventDefault();
+
+				       // Check if the clicked item is 'Switch Admin'
+				       if (event.target.innerText === 'Switch Admin') {
+				           const userEmail = sessionStorage.getItem('userEmail');  // Fetch the email from sessionStorage
+
+				           if (!userEmail) {
+				               showAlert("User is not logged in. Please log in first.", "danger");
+				               return;
+				           }
+
+				           // Send the email to backend to check if the user can switch to Admin
+				           fetch('/check-admin-role', {
+				               method: 'POST',
+				               headers: {
+				                   'Content-Type': 'application/json'
+				               },
+				               body: JSON.stringify({ email: userEmail })
+				           })
+				           .then(response => response.json())
+				           .then(data => {
+				               if (data.success) {
+				                   // The user is authorized to switch to Admin panel
+				                   sessionStorage.setItem('userName', data.eName);  // Store the new name (from Admin)
+				                   sessionStorage.setItem('userRole', "Admin");  // Update role to Admin
+				                   
+								   
+				                   // Redirect to Admin Dashboard
+				                   window.location.href = "/Admin_Dashboard";
+				               } else {
+				                   showAlert("You do not have permission to switch to the Admin panel.", "danger");
+				               }
+				           })
+				           .catch(error => {
+				               console.error("Error:", error);
+				               showAlert("An error occurred. Please try again.", "danger");
+				           });
+				       }
+				   });
+
+				       
+						
+				
+					   
+		  /*script for calender*/
+		  
+		  const today = new Date();
+		          let currentYear = today.getFullYear();
+		          let currentMonth = today.getMonth() + 1;
+		          let currentPeriodIndex = 0; 
+		  
+
+		          function formatDate(date) {
+		              const year = date.getFullYear();
+		              const month = (`0${date.getMonth() + 1}`).slice(-2); // Add leading zero
+		              const day = (`0${date.getDate()}`).slice(-2); // Add leading zero
+		              return `${year}-${month}-${day}`;
+		          }
+
+		          function setCalendarLimits() {
+		              const threeMonthsBefore = new Date(today);
+		              threeMonthsBefore.setMonth(today.getMonth() - 3);
+		              
+		              const threeMonthsAfter = new Date(today);
+		              threeMonthsAfter.setMonth(today.getMonth() + 3);
+		              
+		              const calendarPicker = document.getElementById('calendarPicker');
+		              calendarPicker.min = formatDate(threeMonthsBefore);
+		              calendarPicker.max = formatDate(threeMonthsAfter);
+		          }
+
+		          function getPeriods() {
+		              const periods = [];
+		              const baseDate = new Date(today);
+		              
+		              // Loop to create periods for 3 months before and 3 months after the current date
+		              for (let i = -3; i <= 3; i++) {
+		                  const monthOffset = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1);
+		                  const firstHalf = {
+		                      start: `01/${(`0${monthOffset.getMonth() + 1}`).slice(-2)}/${monthOffset.getFullYear()}`,
+		                      end: `15/${(`0${monthOffset.getMonth() + 1}`).slice(-2)}/${monthOffset.getFullYear()}`
+		                  };
+		                  const lastDayOfMonth = new Date(monthOffset.getFullYear(), monthOffset.getMonth() + 1, 0).getDate();
+		                  const secondHalf = {
+		                      start: `16/${(`0${monthOffset.getMonth() + 1}`).slice(-2)}/${monthOffset.getFullYear()}`,
+		                      end: `${lastDayOfMonth}/${(`0${monthOffset.getMonth() + 1}`).slice(-2)}/${monthOffset.getFullYear()}`
+		                  };
+		                  
+		                  periods.push(firstHalf, secondHalf);
+		              }
+
+		              const todayDate = `${today.getDate()}/${today.getMonth() + 1 < 10 ? '0' + (today.getMonth() + 1) : today.getMonth() + 1}/${today.getFullYear()}`;
+		              periods.forEach((period, index) => {
+		                  if (isDateInRange(todayDate, period.start, period.end)) {
+		                      currentPeriodIndex = index;
+		                  }
+		              });
+		                
+		              return periods;
+		          }
+
+		          function isDateInRange(date, startDate, endDate) {
+		              const [dDay, dMonth, dYear] = date.split('/');
+		              const [sDay, sMonth, sYear] = startDate.split('/');
+		              const [eDay, eMonth, eYear] = endDate.split('/');
+		              const dateObj = new Date(dYear, dMonth - 1, dDay);
+		              const startObj = new Date(sYear, sMonth - 1, sDay);
+		              const endObj = new Date(eYear, eMonth - 1, eDay);
+		              return dateObj >= startObj && dateObj <= endObj;
+		          }
+		          const periods = getPeriods();
+
+		          function updateDropdown() {
+		              const periodDropdown = document.getElementById('periodDropdown');
+		              periodDropdown.innerHTML = '';
+		              periods.forEach((period, index) => {
+		                  const option = document.createElement('option');
+		                  option.value = index;
+		                  option.textContent = `${period.start} - ${period.end}`;
+		                  if (index === currentPeriodIndex) {
+		                      option.selected = true;
+		                  }
+		                  periodDropdown.appendChild(option);
+		              });
+		          }
+
+
+		 let chargeCodes = [];
+
+
+		     function fetchChargeCodes() {
+				  	fetch("/getChargecodes")
+				  		.then(response => response.json())
+				  		.then(data => {
+				  			  chargeCodes = data;
+				  			       populateDropdowns(); 
+				  			  })
+				  		.catch(error => console.error("Error fetching Charge codes:", error));
+				   }
+				   function createDropdown(isDynamicRow = false) {
+				       const container = document.createElement("div");
+				       container.classList.add("dropdown-container");
+				       container.style.display = "flex";
+				       container.style.alignItems = "center";
+				       container.style.justifyContent = "space-between";
+				       container.style.width = "100%";
+
+				       const button = document.createElement("div");
+				       button.classList.add("dropdown-button");
+				       button.textContent = "Select Charge Code";
+				       button.style.display = "flex";
+				       button.style.alignItems = "center";
+				       button.style.flexGrow = "1";
+
+				       const clearButton = document.createElement("span");
+				       clearButton.textContent = "✖";
+				       clearButton.style.cursor = "pointer";
+				       clearButton.style.marginLeft = "8px";
+				       clearButton.style.color = "red";
+				       clearButton.style.fontSize = "10px";
+				       clearButton.style.fontWeight = "bold";
+				       clearButton.style.display = "none";
+				       clearButton.title = "Remove selected charge code";
+
+				       const arrowIcon = document.createElement("span");
+				       arrowIcon.textContent = "➤";
+				       arrowIcon.style.cursor = "pointer";
+				       arrowIcon.style.marginLeft = "auto"; 
+				       arrowIcon.style.fontSize = "14px";  
+				       arrowIcon.style.fontWeight = "bold";
+				       arrowIcon.style.color = "#000";  
+				       arrowIcon.style.display = isDynamicRow ? "inline" : "none"; 
+				       arrowIcon.title = "Replication";
+
+				       arrowIcon.addEventListener("click", function(event) {
+				           event.stopPropagation();
+				           fillRowWithFirstValue(this);
+				       });
+
+				       const panel = document.createElement("div");
+				       panel.classList.add("dropdown-panel");
+
+				       const searchInput = document.createElement("input");
+				       searchInput.type = "text";
+				       searchInput.placeholder = "Search...";
+				       searchInput.classList.add("dropdown-search");
+				       panel.appendChild(searchInput);
+
+				       const sortedCodes = [...chargeCodes].sort((a, b) => {
+				           const aIsTLS = a.code.trim().toUpperCase().startsWith("TLS");
+				           const bIsTLS = b.code.trim().toUpperCase().startsWith("TLS");
+				           return aIsTLS === bIsTLS ? 0 : aIsTLS ? 1 : -1;
+				       });
+
+				       const leaveCache = {}; // Caches leave validation result per type
+
+				       sortedCodes.forEach(code => {
+						
+				    
+						   const option = document.createElement("div");
+						   option.classList.add("dropdown-option");
+						   option.textContent = `${code.code} - ${code.description}`;
+						   option.dataset.value = code.code;
+
+						   // ✅ Apply style for "Complete" status
+						   if (code.status === "Complete") {
+						       option.style.backgroundColor = "#d99891";  // Green background
+						       option.style.fontWeight = "bold";
+						       option.style.color = "#3b3535"; // Optional for readability
+						   }
+
+				           option.addEventListener("click", function () {
+							if (code.status === "Complete") {
+							      showAlert("⚠ This charge code is marked as Complete and cannot be selected.", "danger");
+							      return;
+							  }
+							  
+				               const selectedText = option.textContent;
+				               const username = sessionStorage.getItem("userName");
+
+							   const isSickLeave = selectedText.endsWith("Sick Leave");
+							   const isOptionalLeave = selectedText.endsWith("Optional Leave");
+							   const isCasualLeave = selectedText.endsWith("Casual Leave");
+
+							   if (isSickLeave || isOptionalLeave || isCasualLeave) {
+							       const leaveType = isSickLeave ? "Sick Leave" :
+							                         isOptionalLeave ? "Optional Leave" :
+							                         "Casual Leave";
+
+							       const validateAndApply = (isAllowed) => {
+							           if (!isAllowed) {
+							               showAlert(`⚠ You have no ${leaveType} remaining. Please choose another leave or mark as Loss of Pay.`, "danger");
+							               panel.style.display = "none";
+							           } else {
+							               button.textContent = option.textContent;
+							               button.dataset.value = option.dataset.value;
+							               button.appendChild(clearButton);
+							               panel.style.display = "none";
+							               clearButton.style.display = "inline";
+							               arrowIcon.style.display = "inline";
+							           }
+							       };
+
+							       if (leaveCache[leaveType] !== undefined) {
+							           validateAndApply(leaveCache[leaveType]);
+							       } else {
+							           fetch(`/checkLeaveBalance?username=${encodeURIComponent(username)}&type=${encodeURIComponent(leaveType)}`)
+							               .then(response => response.json())
+							               .then(isAllowed => {
+							                   leaveCache[leaveType] = isAllowed;
+							                   validateAndApply(isAllowed);
+							               });
+							       }
+							   }
+								 else {
+				                   // ✅ Normal charge code
+				                   button.textContent = option.textContent;
+				                   button.dataset.value = option.dataset.value;
+				                   button.appendChild(clearButton);
+				                   panel.style.display = "none";
+				                   clearButton.style.display = "inline";
+				                   arrowIcon.style.display = "inline";
+				               }
+				           });
+
+				           panel.appendChild(option);
+				       });
+
+				       clearButton.addEventListener("click", function (event) {
+				           event.stopPropagation();
+				           button.textContent = "Select Charge Code";
+				           button.dataset.value = "";
+				           clearButton.style.display = "none";
+				           arrowIcon.style.display = isDynamicRow ? "inline" : "none";
+				       });
+
+				       searchInput.addEventListener("input", function () {
+				           const filter = searchInput.value.toLowerCase();
+				           const options = panel.querySelectorAll(".dropdown-option");
+				           options.forEach(option => {
+				               option.style.display = option.textContent.toLowerCase().includes(filter) ? "block" : "none";
+				           });
+				       });
+
+				       button.addEventListener("click", function () {
+				           panel.style.display = panel.style.display === "block" ? "none" : "block";
+				           //addRow(); // Optional: only if you want row add on open
+				       });
+
+				       document.addEventListener("click", function (event) {
+				           if (!container.contains(event.target)) {
+				               panel.style.display = "none";
+				           }
+				       });
+
+				       container.appendChild(button);
+				       container.appendChild(clearButton);
+				       container.appendChild(arrowIcon); 
+				       container.appendChild(panel);
+
+				       return container;
+				   }
+
+
+				   function fillRowWithFirstValue(button) {
+				       const row = button.closest("tr"); 
+				       const inputs = row.querySelectorAll("td input[type='text']"); 
+				       let firstValue = null;
+
+				       
+
+				       // Find the first non-empty, non-disabled value (ONLY from columns 1-16)
+				       inputs.forEach((input, index) => {
+				           if (index >= 1 && index <= 16 && !input.disabled && firstValue === null && input.value.trim() !== "") {
+				               firstValue = input.value;
+				           }
+				       });
+
+				       // If a valid value is found, fill the row (ONLY in columns 1-16)
+				       if (firstValue !== null) {
+				           inputs.forEach((input, index) => {
+				               if (index >= 1 && index <= 16 && !input.disabled) { // ✅ Includes 16th column for longer months
+				                   input.value = firstValue;  
+				                   input.dispatchEvent(new Event('input')); // Ensure change is registered
+				               }
+				           });
+
+	
+
+				           // ✅ Ensure the total is updated correctly
+				           setTimeout(() => {
+				               calculateTotals();
+				           }, 10);
+				       }
+				   }
+
+
+
+
+
+
+		// Add static rows (Work Location & Company Code)
+			function addStaticRows() {
+				
+					const tableBody = document.getElementById("tableBody");
+					const staticRowData = [
+							 { name: "Work Location", value: "00" },
+							 { name: "Company Code", value: "001" }
+						];
+						
+					staticRowData.forEach(item => {
+							const row = document.createElement("tr");
+							 row.classList.add("static-row"); // Add class to identify static rows
+							 
+
+							 const firstCell = document.createElement("td");
+							 firstCell.style.padding = 0;
+							        firstCell.textContent = item.name;
+							         row.appendChild(firstCell);
+
+							           // Add input fields for each day
+							 const period = periods[currentPeriodIndex];
+							 const [startDay, startMonth, startYear] = period.start.split("/");
+							 const [endDay, endMonth, endYear] = period.end.split("/");
+							 let currentDate = new Date(`${startYear}-${startMonth}-${startDay}`);
+							 const endDate = new Date(`${endYear}-${endMonth}-${endDay}`);
+
+							       while (currentDate <= endDate) {
+							             const cell = document.createElement("td");
+							             const input = document.createElement("input");
+							             input.type = "text";
+							             input.style.border = "0px";
+							             input.style.width = "50px";
+							             input.style.outline = "none";
+
+							              // **Set static value**
+							           input.value = item.value;
+							           input.readOnly = true; // Prevent user from editing the static values
+
+							               cell.appendChild(input);
+							               row.appendChild(cell);
+
+							               currentDate.setDate(currentDate.getDate() + 1);
+							         }
+
+							           // Add total column
+							    const totalCell = document.createElement("td");
+								  
+							           totalCell.textContent = "";
+							           totalCell.classList.add("row-total");
+							           row.appendChild(totalCell);
+
+							           tableBody.appendChild(row);
+							       });
+
+							       populateDropdowns();
+								   fetchHolidays();
+							   }
+
+
+				  				// Function to apply dropdowns to existing rows
+				 function populateDropdowns() {
+					
+				  			const rows = document.querySelectorAll("#tableBody tr");
+
+				  				   rows.forEach(row => {
+				  				           const firstCell = row.querySelector("td:first-child");
+				  				           if (!row.classList.contains("static-row")) {
+				  				               if (firstCell) {
+				  				                   firstCell.innerHTML = "";
+				  				                   firstCell.appendChild(createDropdown());
+				  				               }
+				  				           }
+				  				       });
+				  		}
+
+						// Fetch holidays from the backend
+						let holidaysList = [];
+
+						async function fetchHolidays() {
+						    try {
+						        const response = await fetch('/holidaysforUI');
+						        if (!response.ok) {  // Check if the response is successful
+						            throw new Error('Network response was not ok');
+						        }
+						        holidaysList = await response.json();
+						        
+						    } catch (error) {
+						        console.error("Error fetching holidays: ", error);
+						    }
+						}
+
+
+
+						// Helper function to check if a date is a holiday
+						function isHoliday(date) {
+						    const day = String(date.getDate()).padStart(2, '0');
+						    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+						    const year = date.getFullYear();
+						    const formattedDate = `${day}/${month}/${year}`; // Format: dd/MM/yyyy
+
+						    return holidaysList.some(holiday => holiday.holidaydate === formattedDate);
+						}
+
+						function getHolidayName(date) {
+						    const day = String(date.getDate()).padStart(2, '0');
+						    const month = String(date.getMonth() + 1).padStart(2, '0');
+						    const year = date.getFullYear();
+						    const formattedDate = `${day}/${month}/${year}`;
+
+						    const holiday = holidaysList.find(h => h.holidaydate === formattedDate);
+						    return holiday ? holiday.holidayname : null;
+						}
+
+						
+						// Helper function to check if a date is a holiday
+						function isHoliday(date) {
+						    const day = String(date.getDate()).padStart(2, '0');
+						    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+						    const year = date.getFullYear();
+						    const formattedDate = `${day}/${month}/${year}`; // Format: dd/MM/yyyy
+
+						    return holidaysList.some(holiday => holiday.holidaydate === formattedDate);
+						}
+
+						// Function to update the table with disabled Sundays and holidays
+						function updateTable() {
+						    const selectedPeriod = periods[currentPeriodIndex];
+						    const [startDay, startMonth, startYear] = selectedPeriod.start.split('/');
+
+						    const tableHeaders = document.getElementById('tableHeaders');
+						    tableHeaders.innerHTML = '<tr><th style="width: 400px;">Charge Code</th></tr>';
+						    const tableRows = document.getElementById('tableBody');
+						    tableRows.innerHTML = '';
+
+						    const startDate = new Date(`${startYear}-${startMonth}-${startDay}`);
+						    const endDate = new Date(selectedPeriod.end.split('/').reverse().join('-'));
+
+						    let sundayIndexes = []; // Store Sunday column indexes
+
+						    let currentDate = new Date(startDate);
+						    let colIndex = 1;
+						    while (currentDate <= endDate) {
+						        const day = currentDate.getDate();
+						        const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
+
+						        const headerCell = document.createElement('th');
+						        headerCell.innerHTML = `${day}<br>${dayName}`;
+
+						        if (dayName === "Sun") {
+						            sundayIndexes.push(colIndex);
+						        }
+
+						        tableHeaders.querySelector('tr').appendChild(headerCell);
+						        currentDate.setDate(currentDate.getDate() + 1);
+						        colIndex++;
+						    }
+
+						    // Add "Total" column
+						    const totalHeader = document.createElement('th');
+						    totalHeader.textContent = "Total";
+						    tableHeaders.querySelector('tr').appendChild(totalHeader);
+
+						    // Add static rows
+						    addStaticRows();
+
+						    // Add default dynamic rows
+						    for (let i = 0; i < 1; i++) {
+						        addRow();
+						    }
+
+						    // After table created, disable Sundays and Holidays
+						    setTimeout(() => {
+						        const allRows = document.querySelectorAll("#tableBody tr");
+						        const startParts = selectedPeriod.start.split('/');
+						        const periodStartDate = new Date(startParts[2], startParts[1] - 1, startParts[0]); // (yyyy, mm, dd)
+
+						        allRows.forEach(row => {
+						            for (let colIndex = 1; colIndex < row.cells.length - 1; colIndex++) {
+						                const cell = row.cells[colIndex];
+
+						                const cellDate = new Date(periodStartDate);
+						                cellDate.setDate(periodStartDate.getDate() + colIndex - 1); // Move days based on column
+
+						                const dayName = cellDate.toLocaleDateString('en-US', { weekday: 'short' });
+
+						                if (dayName === "Sun" || isHoliday(cellDate)) {
+						                    const input = cell.querySelector("input");
+						                    if (input) {
+						                        input.disabled = true;
+						                        input.style.backgroundColor = "#d3d3d3"; // Grey input
+												
+												const holidayName = getHolidayName(cellDate);
+
+												if (dayName === "Sun" && holidayName) {
+												    input.setAttribute("title", `Sunday + ${holidayName} - Not Editable`);
+												} else if (dayName === "Sun") {
+												    input.setAttribute("title", "Sunday - Not Editable");
+												} else if (holidayName) {
+												    input.setAttribute("title", `${holidayName} - Not Editable`);
+												}
+
+						                    }
+						                    cell.style.backgroundColor = "#d3d3d3"; // Grey full cell
+						                }
+						            }
+						        });
+						    }, 100);
+
+						    // Update footer totals
+						    updateFooter(sundayIndexes);
+						}
+
+
+						
+						function updateFooter(sundayIndexes) {
+						    const period = periods[currentPeriodIndex];
+						    const [startDay, startMonth, startYear] = period.start.split('/');
+						    const [endDay, endMonth, endYear] = period.end.split('/');
+
+						    let currentDate = new Date(`${startYear}-${startMonth}-${startDay}`);
+						    const endDate = new Date(`${endYear}-${endMonth}-${endDay}`);
+
+						    const footerRow = document.getElementById('tableFooter').querySelector('tr');
+						    footerRow.innerHTML = ''; // Reset footer row
+
+						    // Add "Charge Code" cell
+						    const chargeCodeCell = document.createElement('td');
+						    chargeCodeCell.textContent = 'Total Hours';
+						    footerRow.appendChild(chargeCodeCell);
+
+						    let colIndex = 1;
+						    while (currentDate <= endDate) {
+						        const totalCell = document.createElement('td');
+
+						        const isSunday = sundayIndexes.includes(colIndex);
+						        const isHolidayDate = isHoliday(currentDate);
+
+						        if (isSunday || isHolidayDate) {
+						            totalCell.textContent = ""; // Keep blank
+						            totalCell.style.backgroundColor = "#d3d3d3"; // Grey out Sundays + Holidays in Footer too
+						        } else {
+						            totalCell.textContent = ''; // Empty, waiting for totals
+						        }
+
+						        footerRow.appendChild(totalCell);
+						        currentDate.setDate(currentDate.getDate() + 1);
+						        colIndex++;
+						    }
+
+						    // Add final "Grand Total" column
+						    const totalColumnFooter = document.createElement('td');
+						    totalColumnFooter.textContent = '';
+						    totalColumnFooter.id = 'grandTotal';
+						    footerRow.appendChild(totalColumnFooter);
+
+						    // Rebind event listeners properly
+						    const inputs = document.querySelectorAll('input[type="text"]');
+						    inputs.forEach(input => {
+						        input.removeEventListener('input', calculateTotals); // Prevent duplicate
+						        input.addEventListener('input', calculateTotals);
+						    });
+						}
+
+
+
+						function addRow() {
+						    const row = document.createElement("tr");
+
+						    const projectCell = document.createElement("td");
+						    projectCell.appendChild(createDropdown()); // Dropdown for charge code
+						    row.appendChild(projectCell);
+
+						    // Get selected period
+						    const period = periods[currentPeriodIndex];
+						    const [startDay, startMonth, startYear] = period.start.split("/");
+						    const [endDay, endMonth, endYear] = period.end.split("/");
+
+						    let currentDate = new Date(`${startYear}-${startMonth}-${startDay}`);
+						    const endDate = new Date(`${endYear}-${endMonth}-${endDay}`);
+
+						    let colIndex = 1;
+
+						    while (currentDate <= endDate) {
+						        const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'short' });
+
+						        const cell = document.createElement("td");
+						        const input = document.createElement("input");
+						        input.type = "text";
+						        input.style.border = "0px";
+						        input.style.width = "50px";
+						        input.style.outline = "none";
+
+						        // ✅ Disable if Sunday or Holiday
+						        if (dayName === "Sun" || isHoliday(currentDate)) {
+						            input.disabled = true;
+						            input.style.backgroundColor = "#d3d3d3";
+						            cell.style.backgroundColor = "#d3d3d3";
+						        }
+
+						        cell.appendChild(input);
+						        row.appendChild(cell);
+
+						        input.addEventListener("input", calculateTotals);
+
+						        currentDate.setDate(currentDate.getDate() + 1);
+						        colIndex++;
+						    }
+
+						    // Add total column
+						    const totalCell = document.createElement("td");
+						    totalCell.textContent = "";
+						    totalCell.classList.add("row-total");
+						    row.appendChild(totalCell);
+
+						    document.getElementById("tableBody").appendChild(row);
+						}
+
+
+
+		  	  // Attach event listener to "Add Row" button
+		  	  document.getElementById("addRow").addEventListener("click", addRow);
+
+		  	  // Ensure static rows are added on page load
+		  	  addStaticRows();
+
+		  	  // Fetch charge codes & populate existing table
+		  	  fetchChargeCodes();
+			  
+			  
+			  function calculateTotals() {
+			      let grandTotal = 0;
+			      const rows = document.querySelectorAll('#tableBody tr');
+			      const footerCells = document.querySelectorAll('#tableFooter tr td');
+
+			      const period = periods[currentPeriodIndex];
+			      const [startDay, startMonth, startYear] = period.start.split('/');
+			      const [endDay, endMonth, endYear] = period.end.split('/');
+
+			      let currentDate = new Date(`${startYear}-${startMonth}-${startDay}`);
+			      const endDate = new Date(`${endYear}-${endMonth}-${endDay}`);
+
+			      let totalDays = 0;
+			      while (currentDate <= endDate) {
+			          totalDays++;
+			          currentDate.setDate(currentDate.getDate() + 1);
+			      }
+
+			      // ✅ Ensure total array matches the number of date columns
+			      const totals = new Array(totalDays).fill(0);
+
+			      rows.forEach((row, rowIndex) => {
+			          if (row.classList.contains("static-row")) return; // Skip static rows
+
+			          const inputs = row.querySelectorAll('td input[type="text"]');
+			          let rowSum = 0;
+
+			          inputs.forEach((input, index) => {
+			              const value = parseFloat(input.value) || 0;
+			              totals[index] += value; // ✅ Fix: Do not subtract 1 from index
+			              rowSum += value;
+			          });
+
+			          // ✅ Fix: Use correct column for row total
+			          const totalCell = row.querySelector('.row-total');
+			          if (totalCell) {
+			              totalCell.textContent = rowSum.toFixed(2);
+			          }
+
+			          grandTotal += rowSum;
+			      });
+
+			      // ✅ Update the footer cells correctly
+			      totals.forEach((total, index) => {
+			          if (footerCells[index + 1]) {
+			              footerCells[index + 1].textContent = total.toFixed(2);
+			          }
+			      });
+
+			      // ✅ Ensure grand total column updates correctly
+			      const grandTotalCell = document.getElementById('grandTotal');
+			      if (grandTotalCell) {
+			          grandTotalCell.textContent = grandTotal.toFixed(2);
+			      }
+			  }
+
+			  // ✅ Ensure this function runs when new rows are added
+			  document.getElementById('addRow').addEventListener('click', () => {
+			     
+			      calculateTotals(); // Recalculate totals after adding rows
+			  });
+
+			  // ✅ Run calculateTotals after initializing the table
+			  updateTable();
+			  calculateTotals();
+
+
+		          function updateDropdowns() {
+		              const selects = document.querySelectorAll('select');
+		              const selectedValues = [...selects].map(select => select.value).filter(val => val !== '');
+
+		              selects.forEach(select => {
+		                  [...select.options].forEach(option => {
+		                      if (selectedValues.includes(option.value) && option.value !== select.value) {
+		                          option.disabled = true;
+		                      } else {
+		                          option.disabled = false;
+		                      }
+		                  });
+		              });
+		          }
+
+		          document.getElementById('prevPeriod').addEventListener('click', function() {
+		              if (currentPeriodIndex > 0) {
+		                  currentPeriodIndex--;
+		                  updateDropdown();
+		                  updateTable();
+						  
+						  
+		              }
+		          });
+
+		          document.getElementById('nextPeriod').addEventListener('click', function() {
+		              if (currentPeriodIndex < periods.length - 1) {
+		                  currentPeriodIndex++;
+		                  updateDropdown();
+		                  updateTable();
+		              }
+		          });
+
+		          document.getElementById('periodDropdown').addEventListener('change', function() {
+		              currentPeriodIndex = parseInt(this.value);
+		              updateTable();
+		          });
+
+		          document.getElementById('calendarPicker').addEventListener('change', function() {
+		              const selectedDate = new Date(this.value);
+		              for (let i = 0; i < periods.length; i++) {
+		                  const [startDay, startMonth, startYear] = periods[i].start.split('/');
+		                  const [endDay, endMonth, endYear] = periods[i].end.split('/');
+		                  const periodStart = new Date(`${startYear}-${startMonth}-${startDay}`);
+		                  const periodEnd = new Date(`${endYear}-${endMonth}-${endDay}`);
+
+		                  if (selectedDate >= periodStart && selectedDate <= periodEnd) {
+		                      currentPeriodIndex = i;
+		                      updateDropdown();
+		                      updateTable();
+		                      break;
+		                  }
+		              }
+		          });
+
+		          document.getElementById('calendarPicker').value = today.toISOString().split('T')[0];
+		          setCalendarLimits();
+		          updateDropdown();
+		          updateTable();
+		          document.getElementById('addRow').addEventListener('click', addRow);
+				  
+				  
+				  /*Notification script*/
+				  document.addEventListener("DOMContentLoaded", function () {
+				      let stompClient = null;
+				      let notificationCount = 0;
+				      let unseenNotifications = [];
+				      let removeTimer = null;
+
+				      function connectWebSocket() {
+				          const socket = new SockJS('/ws');
+				          stompClient = Stomp.over(socket);
+						  
+						  stompClient.debug = null;  // Disable debug logs
+
+				          stompClient.connect({}, function () {
+				    
+
+				              // ✅ Admin notifications
+				              stompClient.subscribe('/topic/adminNotifications', function (notification) {
+				                  const message = JSON.parse(notification.body).message;
+				                  showNotification(message, "admin");
+				              });
+
+				              // ✅ Employee-specific notifications
+				              const userName = sessionStorage.getItem("userName");
+				              if (userName) {
+				                  stompClient.subscribe(`/user/${userName}/topic/notifications`, function (notification) {
+				                      const message = JSON.parse(notification.body).message;
+				                      showNotification(message, "employee");
+				                  });
+				              }
+				          }, function (error) {
+				              
+				              retryConnection();
+				          });
+				      }
+
+				      function retryConnection() {
+				   
+				          setTimeout(connectWebSocket, 3000);
+				      }
+
+				      function fetchUnreadNotifications() {
+				          const userName = sessionStorage.getItem("userName");
+				          if (!userName) return;
+
+				          fetch(`/notifications/unread/${userName}`)
+				              .then(response => response.json())
+				              .then(data => {
+				                  data.forEach(notification => {
+				                      showNotification(notification.message, "unread");
+				                  });
+				              })
+				              .catch(error => console.error("❌ Error fetching unread notifications:", error));
+				      }
+
+				      function showNotification(message, panelType) {
+				          const badge = document.getElementById("notificationCount");
+				          const notificationList = document.getElementById("notificationList");
+				          if (!badge || !notificationList) return;
+
+				          notificationCount++;
+				          badge.style.display = "inline";
+				          badge.textContent = notificationCount;
+
+				          const notificationItem = document.createElement("div");
+				          notificationItem.className = "dropdown-item";
+				          notificationItem.innerHTML  = message;
+				          notificationList.prepend(notificationItem);
+				          unseenNotifications.push(notificationItem);
+
+				          // Start the auto-remove timer
+				          startNotificationTimer();
+				      }
+
+				      function startNotificationTimer() {
+				          if (removeTimer) clearTimeout(removeTimer);
+
+				          removeTimer = setTimeout(() => {
+				              unseenNotifications.forEach((item) => item.remove());
+				              unseenNotifications = [];
+				              document.getElementById("notificationCount").style.display = "none";
+				          }, 2 * 60 * 1000);
+				      }
+
+				      function toggleNotifications() {
+				          const dropdown = document.getElementById("notificationDropdown");
+				          if (!dropdown) return;
+
+				          dropdown.classList.toggle("show");
+
+				          if (dropdown.classList.contains("show")) {
+				              unseenNotifications.forEach((item, index) => {
+				                  setTimeout(() => {
+				                      item.remove();
+				                      unseenNotifications.splice(index, 1);
+				                      if (unseenNotifications.length === 0) {
+				                          document.getElementById("notificationCount").style.display = "none";
+				                      }
+				                  }, 2 * 60 * 1000);
+				              });
+
+				              unseenNotifications = [];
+				          }
+
+				          notificationCount = 0;
+				          const badge = document.getElementById("notificationCount");
+				          if (badge) {
+				              badge.style.display = "none";
+				          }
+				      }
+
+				      document.addEventListener("click", function (event) {
+				          const dropdown = document.getElementById("notificationDropdown");
+				          const bellIcon = document.getElementById("notificationBell");
+				          if (dropdown && bellIcon) {
+				              if (!dropdown.contains(event.target) && !bellIcon.contains(event.target)) {
+				                  dropdown.classList.remove("show");
+				              }
+				          }
+				      });
+
+				      const bellIcon = document.getElementById("notificationBell");
+				      if (bellIcon) {
+				          bellIcon.addEventListener("click", toggleNotifications);
+				      } else {
+				          console.error("❌ Notification bell icon not found.");
+				      }
+
+				      connectWebSocket();
+				      fetchUnreadNotifications();
+				  });
+
+
+
+				  
+				
+</script>
+ </body>
+ </html>
